@@ -2,7 +2,7 @@
 
 ## Project
 
-FocusFlow is an Electron desktop app for task planning, Pomodoro focus sessions, Strict Mode, statistics, streaks, and English/Ukrainian localization.
+FocusFlow is an Electron desktop app for task planning, Pomodoro focus sessions, daily goals, Strict Mode, statistics, tray controls, a Mini Timer, and English/Ukrainian localization.
 
 The user-facing app is implemented in React + TypeScript. State is handled through Zustand stores persisted to LocalStorage. The Windows app is packaged with Electron Builder.
 
@@ -15,6 +15,7 @@ npm.cmd install
 npm.cmd run dev
 npm.cmd run build
 npm.cmd run dist:win
+npm.cmd run dist:installer
 ```
 
 `npm.cmd run build` is the minimum validation before completing code changes.
@@ -65,8 +66,9 @@ Do not commit generated output.
 
 - `useThemeStore`: light/dark theme.
 - `useLanguageStore`: English/Ukrainian language.
-- `useTaskStore`: tasks and CRUD behavior.
-- `useTimerStore`: Pomodoro mode, durations, active task, countdown, completion event.
+- `useGoalStore`: daily focus goal mode and target.
+- `useTaskStore`: tasks, priorities, notes, Today Queue membership, and CRUD behavior.
+- `useTimerStore`: Pomodoro mode, auto-start mode, durations, active task, countdown, completion events.
 - `useStrictModeStore`: Strict Mode toggle, blocked sites, lockout attempts.
 - `useStatsStore`: completed Pomodoro session history.
 
@@ -76,6 +78,8 @@ Completed work sessions are emitted from `useTimerStore.lastCompletedPomodoro`.
 `usePomodoroSessionRecorder` listens for that event and writes one persisted session to `useStatsStore`.
 
 Avoid recording stats directly from UI button handlers. The timer store should remain the source of truth for completed Pomodoros.
+
+The main renderer is the source of truth for timer ticking. Tray and Mini Timer controls must communicate through the preload IPC bridge and must not create a second independent timer loop.
 
 ## Localization
 
@@ -115,6 +119,12 @@ The portable executable is generated at:
 
 ```text
 release/FocusFlow-0.1.0-portable.exe
+```
+
+The Windows installer is generated at:
+
+```text
+release/FocusFlow-Setup-0.1.0.exe
 ```
 
 ## Git Safety

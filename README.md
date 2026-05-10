@@ -1,18 +1,22 @@
 # FocusFlow
 
-FocusFlow is a desktop anti-procrastination app built with Electron, React, TypeScript, Tailwind CSS, Zustand, and Vite. It combines task planning, a Pomodoro timer, Strict Mode, local statistics, streaks, and English/Ukrainian UI language switching.
+FocusFlow is a desktop anti-procrastination app built with Electron, React, TypeScript, Tailwind CSS, Zustand, and Vite. It combines task planning, a Pomodoro timer, Strict Mode, daily goals, local statistics, tray controls, and English/Ukrainian UI language switching.
 
 ## Features
 
-- Task Manager: create, edit, delete, complete, and persist tasks locally.
-- Pomodoro Timer: work, short break, and long break modes with configurable durations.
+- Task Manager: create, edit, delete, complete, prioritize, add notes, and persist tasks locally.
+- Today Queue: plan today's active focus queue and reorder it with up/down controls.
+- Pomodoro Timer: work, short break, and long break modes with configurable durations and auto-start modes.
 - Task-linked focus sessions: select an active task for the timer.
+- Daily Focus Goal: track daily progress in minutes or Pomodoros.
 - Strict Mode: prevent pausing/resetting active work sessions and manage a blocked-domain list.
 - Windows hosts script generation for blocked domains.
-- Statistics: completed Pomodoro history, weekly focus chart, current streak, and best streak.
+- Statistics: completed Pomodoro history, weekly focus chart, 12-week heatmap, current streak, and best streak.
+- System notifications when timer sessions complete.
+- Tray mode with Start/Pause/Reset actions and a Mini Timer window.
 - Appearance: light/dark theme.
 - Languages: English and Ukrainian.
-- Windows packaging: portable `.exe` build with a custom app icon.
+- Windows packaging: portable `.exe` and installer builds with a custom app icon.
 
 ## Tech Stack
 
@@ -56,7 +60,7 @@ npm.cmd run build
 
 This runs TypeScript checks, builds the Electron main/preload files, and builds the Vite renderer.
 
-## Build Windows EXE
+## Build Windows Portable EXE
 
 ```powershell
 npm.cmd run dist:win
@@ -66,6 +70,18 @@ The portable executable is generated at:
 
 ```text
 release/FocusFlow-0.1.0-portable.exe
+```
+
+## Build Windows Installer
+
+```powershell
+npm.cmd run dist:installer
+```
+
+The installer is generated at:
+
+```text
+release/FocusFlow-Setup-0.1.0.exe
 ```
 
 `release/`, `dist/`, `dist-electron/`, and `node_modules/` are generated directories and are ignored by git.
@@ -101,6 +117,7 @@ The app stores user data in LocalStorage through Zustand persist middleware:
 - `focusflow-language`
 - `focusflow-tasks`
 - `focusflow-timer`
+- `focusflow-goal`
 - `focusflow-strict-mode`
 - `focusflow-stats`
 
@@ -122,8 +139,5 @@ npm.cmd run build           Type-check and build the app
 npm.cmd run build:electron  Build Electron main/preload only
 npm.cmd run preview         Preview the Vite renderer
 npm.cmd run dist:win        Build a Windows portable exe
+npm.cmd run dist:installer  Build a Windows installer exe
 ```
-
-## GitHub Publishing
-
-This workspace was not initialized as a git repository when the app was created. To push it to GitHub, initialize git, commit the source files, create or add a GitHub remote, and push the branch. Do not commit generated directories such as `node_modules/`, `dist/`, `dist-electron/`, or `release/`.

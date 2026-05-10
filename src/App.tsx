@@ -4,11 +4,16 @@ import { useState } from "react";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LanguageSelect } from "./components/settings/LanguageSelect";
 import { StrictModePanel } from "./components/settings/StrictModePanel";
+import { DailyGoalProgress } from "./components/stats/DailyGoalProgress";
 import { StatsDashboard } from "./components/stats/StatsDashboard";
 import { TaskList } from "./components/tasks/TaskList";
+import { TodayQueue } from "./components/tasks/TodayQueue";
+import { MiniTimerWindow } from "./components/timer/MiniTimerWindow";
 import { TimerPanel } from "./components/timer/TimerPanel";
 import { useBlocker } from "./hooks/useBlocker";
 import { usePomodoroSessionRecorder } from "./hooks/usePomodoroSessionRecorder";
+import { useTimerBridge } from "./hooks/useTimerBridge";
+import { useTimerNotifications } from "./hooks/useTimerNotifications";
 import { useTranslation } from "./hooks/useTranslation";
 import { useTimer } from "./hooks/useTimer";
 import { useTaskStore } from "./store/useTaskStore";
@@ -16,7 +21,14 @@ import { useThemeStore } from "./store/useThemeStore";
 import type { NavigationSection } from "./types";
 
 function App() {
+  const isMiniView = new URLSearchParams(window.location.search).get("view") === "mini";
+
+  if (isMiniView) {
+    return <MiniTimerWindow />;
+  }
+
   usePomodoroSessionRecorder();
+  useTimerNotifications();
 
   const [activeSection, setActiveSection] =
     useState<NavigationSection>("dashboard");
@@ -27,6 +39,14 @@ function App() {
   const mode = useThemeStore((state) => state.mode);
   const toggleMode = useThemeStore((state) => state.toggleMode);
   const completedTasks = tasks.filter((task) => task.status === "completed");
+  const activeTask = tasks.find((task) => task.id === timer.activeTaskId);
+
+  useTimerBridge({
+    activeTaskTitle: activeTask?.title ?? null,
+    isStrictSessionActive: blocker.isStrictSessionActive,
+    onLockedResetAttempt: blocker.recordLockedResetAttempt,
+    timer
+  });
 
   return (
     <AppLayout
@@ -79,7 +99,9 @@ function App() {
 
         {activeSection === "dashboard" && (
           <>
+            <DailyGoalProgress />
             <StatsDashboard />
+            <TodayQueue />
             <TaskList />
           </>
         )}

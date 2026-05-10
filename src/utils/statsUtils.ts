@@ -1,4 +1,9 @@
-import type { DailyFocusStat, PomodoroSession, StreakStats } from "../types";
+import type {
+  DailyFocusStat,
+  HeatmapDay,
+  PomodoroSession,
+  StreakStats
+} from "../types";
 
 export function toDateKey(value: Date | string): string {
   const date = typeof value === "string" ? new Date(value) : value;
@@ -73,6 +78,54 @@ export function getDailyFocusStats(
       }
     );
   });
+}
+
+export function getCalendarHeatmapStats(
+  sessions: PomodoroSession[],
+  dayCount = 84,
+  now = new Date(),
+  locale?: string
+): HeatmapDay[] {
+  const dayFormatter = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    weekday: "short"
+  });
+  const statsByDate = sessions.reduce<
+    Record<string, { minutes: number; sessions: number }>
+  >((stats, session) => {
+    const date = toDateKey(session.completedAt);
+    const existing = stats[date] ?? { minutes: 0, sessions: 0 };
+
+    stats[date] = {
+      minutes: existing.minutes + getFocusMinutes(session.durationSeconds),
+      sessions: existing.sessions + 1
+    };
+
+    return stats;
+  }, {});
+
+  const days = Array.from({ length: dayCount }, (_, index) => {
+    const date = new Date(now);
+    date.setDate(now.getDate() - (dayCount - 1 - index));
+    const dateKey = toDateKey(date);
+    const stat = statsByDate[dateKey] ?? { minutes: 0, sessions: 0 };
+
+    return {
+      date: dateKey,
+      intensity: 0,
+      label: dayFormatter.format(date),
+      minutes: stat.minutes,
+      sessions: stat.sessions
+    };
+  });
+  const maxMinutes = Math.max(1, ...days.map((day) => day.minutes));
+
+  return days.map((day) => ({
+    ...day,
+    intensity:
+      day.minutes === 0 ? 0 : Math.min(4, Math.ceil((day.minutes / maxMinutes) * 4))
+  }));
 }
 
 export function getStreakStats(

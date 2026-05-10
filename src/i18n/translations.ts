@@ -36,6 +36,21 @@ export const translations = {
       tasks: "Tasks",
       timer: "Timer"
     },
+    goal: {
+      completeMinutes: "Daily focus goal complete.",
+      completePomodoros: "Daily Pomodoro goal complete.",
+      eyebrow: "Daily goal",
+      invalid: "Enter a value within the allowed range.",
+      modes: {
+        minutes: "Minutes",
+        pomodoros: "Pomodoros"
+      },
+      progress: "Daily goal progress",
+      remainingMinutes: "minutes remaining",
+      remainingPomodoros: "Pomodoros remaining",
+      target: "Target",
+      title: "Today's focus goal"
+    },
     task: {
       active: "active",
       addTask: "Add task",
@@ -44,20 +59,43 @@ export const translations = {
       empty: "No tasks yet.",
       errorTitle: "Enter a task title.",
       fieldEstimate: "Pomodoros",
+      fieldNotes: "Notes",
+      fieldPriority: "Priority",
       fieldTitle: "Task",
+      addToday: "Add today",
+      inToday: "Today",
+      hideNotes: "Hide notes",
       manager: "Task manager",
+      moveDown: "Move down",
+      moveUp: "Move up",
+      notToday: "Not today",
+      notesPlaceholder: "Add context, links, or a short checklist",
       placeholder: "Write the next concrete task",
       pomodoroSingular: "pomodoro",
       pomodoroPlural: "pomodoros",
+      priority: {
+        high: "High",
+        low: "Low",
+        medium: "Medium"
+      },
+      removeToday: "Remove today",
+      showNotes: "Show notes",
       title: "Plan the next focus block",
+      todayCount: "in today's queue",
+      todayEmpty: "No tasks in today's queue.",
+      todayEyebrow: "Today",
+      todayQueue: "Today queue",
+      todayShort: "Today",
       total: "total"
     },
     timer: {
       focusTask: "Focus task",
       locked: "Locked",
+      mini: "Mini",
       noActiveTasks: "No active tasks",
       noFocusTask: "No focus task selected",
       noTaskSelected: "No task selected",
+      open: "Open",
       session: "Session",
       sessionLengths: "Session lengths",
       status: {
@@ -66,11 +104,36 @@ export const translations = {
         running: "Running"
       },
       strict: "Strict",
+      autoStart: {
+        title: "Auto-start",
+        modes: {
+          all: {
+            label: "Auto all",
+            description: "Start every work and break transition."
+          },
+          breaks: {
+            label: "Auto breaks",
+            description: "Start breaks after work sessions."
+          },
+          manual: {
+            label: "Manual",
+            description: "Wait for Start after every transition."
+          }
+        }
+      },
       modes: {
         work: { label: "Work", description: "Focused task time" },
         shortBreak: { label: "Short break", description: "Quick recovery" },
         longBreak: { label: "Long break", description: "Deeper reset" }
       }
+    },
+    notifications: {
+      breakComplete: "Break finished. Next up: {nextMode}.",
+      breakTitle: "Break complete",
+      focusTitle: "Focus session complete",
+      workComplete: "Nice work. Next up: {nextMode}.",
+      workCompleteWithTask:
+        "{taskTitle} is done for this round. Next up: {nextMode}."
     },
     settings: {
       appearance: "Appearance",
@@ -93,11 +156,15 @@ export const translations = {
     },
     stats: {
       bestStreak: "Best streak",
+      calendarHeatmap: "Calendar heatmap",
       completedPomodoros: "Completed Pomodoros",
       currentStreak: "Current streak",
       focusHistory: "Focus history",
       lastSevenDays: "Last 7 days",
+      lastTwelveWeeks: "Last 12 weeks",
+      less: "Less",
       minutes: "minutes",
+      more: "More",
       noSessions: "No completed sessions yet.",
       productiveMinutes: "Productive minutes",
       recentSessions: "Recent sessions",
@@ -147,6 +214,21 @@ export const translations = {
       tasks: "Завдання",
       timer: "Таймер"
     },
+    goal: {
+      completeMinutes: "Денну ціль фокусу виконано.",
+      completePomodoros: "Денну Pomodoro-ціль виконано.",
+      eyebrow: "Денна ціль",
+      invalid: "Введи значення в дозволених межах.",
+      modes: {
+        minutes: "Хвилини",
+        pomodoros: "Pomodoro"
+      },
+      progress: "Прогрес денної цілі",
+      remainingMinutes: "хвилин залишилось",
+      remainingPomodoros: "Pomodoro залишилось",
+      target: "Ціль",
+      title: "Фокус-ціль на сьогодні"
+    },
     task: {
       active: "активні",
       addTask: "Додати завдання",
@@ -155,20 +237,43 @@ export const translations = {
       empty: "Завдань поки немає.",
       errorTitle: "Введи назву завдання.",
       fieldEstimate: "Pomodoro",
+      fieldNotes: "Нотатки",
+      fieldPriority: "Пріоритет",
+      addToday: "Додати на сьогодні",
+      inToday: "Сьогодні",
+      hideNotes: "Сховати нотатки",
+      moveDown: "Перемістити вниз",
+      moveUp: "Перемістити вгору",
+      notToday: "Не сьогодні",
+      notesPlaceholder: "Додай контекст, посилання або короткий чекліст",
       fieldTitle: "Завдання",
       manager: "Менеджер завдань",
       placeholder: "Запиши наступне конкретне завдання",
       pomodoroSingular: "pomodoro",
       pomodoroPlural: "pomodoro",
+      priority: {
+        high: "Високий",
+        low: "Низький",
+        medium: "Середній"
+      },
+      removeToday: "Прибрати зі сьогодні",
+      showNotes: "Показати нотатки",
+      todayCount: "у черзі на сьогодні",
+      todayEmpty: "У черзі на сьогодні поки немає задач.",
+      todayEyebrow: "Сьогодні",
+      todayQueue: "Черга на сьогодні",
+      todayShort: "Сьогодні",
       title: "Заплануй наступний фокус-блок",
       total: "усього"
     },
     timer: {
       focusTask: "Завдання для фокусу",
       locked: "Заблоковано",
+      mini: "Міні",
       noActiveTasks: "Немає активних завдань",
       noFocusTask: "Завдання не вибрано",
       noTaskSelected: "Без вибраного завдання",
+      open: "Відкрити",
       session: "Сесія",
       sessionLengths: "Тривалість сесій",
       status: {
@@ -177,11 +282,36 @@ export const translations = {
         running: "Запущено"
       },
       strict: "Strict",
+      autoStart: {
+        title: "Автостарт",
+        modes: {
+          all: {
+            label: "Усе автоматично",
+            description: "Автоматично стартувати роботу й перерви."
+          },
+          breaks: {
+            label: "Перерви автоматично",
+            description: "Автоматично стартувати перерви після роботи."
+          },
+          manual: {
+            label: "Вручну",
+            description: "Чекати Start після кожного переходу."
+          }
+        }
+      },
       modes: {
         work: { label: "Робота", description: "Час сфокусованої роботи" },
         shortBreak: { label: "Коротка перерва", description: "Швидке відновлення" },
         longBreak: { label: "Довга перерва", description: "Глибше відновлення" }
       }
+    },
+    notifications: {
+      breakComplete: "Перерва завершена. Далі: {nextMode}.",
+      breakTitle: "Перерву завершено",
+      focusTitle: "Фокус-сесію завершено",
+      workComplete: "Гарна робота. Далі: {nextMode}.",
+      workCompleteWithTask:
+        "{taskTitle} завершено для цього раунду. Далі: {nextMode}."
     },
     settings: {
       appearance: "Вигляд",
@@ -204,11 +334,15 @@ export const translations = {
     },
     stats: {
       bestStreak: "Найкращий стрік",
+      calendarHeatmap: "Календар фокусу",
       completedPomodoros: "Завершені Pomodoro",
       currentStreak: "Поточний стрік",
       focusHistory: "Історія фокусу",
       lastSevenDays: "Останні 7 днів",
+      lastTwelveWeeks: "Останні 12 тижнів",
+      less: "Менше",
       minutes: "хвилин",
+      more: "Більше",
       noSessions: "Завершених сесій поки немає.",
       productiveMinutes: "Продуктивні хвилини",
       recentSessions: "Останні сесії",

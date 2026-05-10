@@ -10,6 +10,7 @@ import {
   getTodaySessions,
   getTotalFocusMinutes
 } from "../../utils/statsUtils";
+import { CalendarHeatmap } from "./CalendarHeatmap";
 
 function formatFocusMinutes(
   minutes: number,
@@ -200,6 +201,8 @@ export function StatsDashboard() {
           )}
         </article>
       </div>
+
+      <CalendarHeatmap />
     </section>
   );
 }

@@ -2,7 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type {
+  AutoStartMode,
   CompletedPomodoroEvent,
+  CompletedTimerEvent,
   TimerDurations,
   TimerMode,
   TimerStatus
@@ -10,20 +12,24 @@ import type {
 import {
   DEFAULT_TIMER_DURATIONS,
   getNextTimerMode,
-  minutesToSeconds
+  minutesToSeconds,
+  shouldAutoStartNextMode
 } from "../utils/timerUtils";
 
 interface TimerState {
   activeTaskId: string | null;
+  autoStartMode: AutoStartMode;
   completedWorkSessions: number;
   durations: TimerDurations;
   lastCompletedPomodoro: CompletedPomodoroEvent | null;
+  lastCompletedTimerEvent: CompletedTimerEvent | null;
   mode: TimerMode;
   remainingSeconds: number;
   status: TimerStatus;
   pauseTimer: () => void;
   resetTimer: () => void;
   setActiveTaskId: (taskId: string | null) => void;
+  setAutoStartMode: (mode: AutoStartMode) => void;
   setDurationMinutes: (mode: TimerMode, minutes: number) => void;
   setMode: (mode: TimerMode) => void;
   startTimer: () => void;
@@ -34,9 +40,11 @@ export const useTimerStore = create<TimerState>()(
   persist(
     (set) => ({
       activeTaskId: null,
+      autoStartMode: "manual",
       completedWorkSessions: 0,
       durations: DEFAULT_TIMER_DURATIONS,
       lastCompletedPomodoro: null,
+      lastCompletedTimerEvent: null,
       mode: "work",
       remainingSeconds: DEFAULT_TIMER_DURATIONS.work,
       status: "idle",
@@ -50,6 +58,7 @@ export const useTimerStore = create<TimerState>()(
           status: "idle"
         })),
       setActiveTaskId: (taskId) => set({ activeTaskId: taskId }),
+      setAutoStartMode: (autoStartMode) => set({ autoStartMode }),
       setDurationMinutes: (mode, minutes) =>
         set((state) => {
           const nextDuration = minutesToSeconds(minutes);
@@ -94,6 +103,14 @@ export const useTimerStore = create<TimerState>()(
               : state.completedWorkSessions;
           const nextMode = getNextTimerMode(state.mode, completedWorkSessions);
           const completedAt = new Date().toISOString();
+          const lastCompletedTimerEvent = {
+            completedAt,
+            durationSeconds: state.durations[state.mode],
+            id: `timer-${completedAt}-${state.mode}`,
+            mode: state.mode,
+            nextMode,
+            taskId: state.activeTaskId
+          };
           const lastCompletedPomodoro =
             state.mode === "work"
               ? {
@@ -107,9 +124,12 @@ export const useTimerStore = create<TimerState>()(
           return {
             completedWorkSessions,
             lastCompletedPomodoro,
+            lastCompletedTimerEvent,
             mode: nextMode,
             remainingSeconds: state.durations[nextMode],
-            status: "idle"
+            status: shouldAutoStartNextMode(state.autoStartMode, nextMode)
+              ? "running"
+              : "idle"
           };
         })
     }),
@@ -120,6 +140,8 @@ export const useTimerStore = create<TimerState>()(
         return {
           ...currentState,
           activeTaskId: persisted?.activeTaskId ?? currentState.activeTaskId,
+          autoStartMode:
+            persisted?.autoStartMode ?? currentState.autoStartMode,
           durations: {
             ...currentState.durations,
             ...persisted?.durations
@@ -131,6 +153,7 @@ export const useTimerStore = create<TimerState>()(
       name: "focusflow-timer",
       partialize: (state) => ({
         activeTaskId: state.activeTaskId,
+        autoStartMode: state.autoStartMode,
         durations: state.durations
       })
     }

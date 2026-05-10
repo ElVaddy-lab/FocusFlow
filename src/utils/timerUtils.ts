@@ -1,4 +1,9 @@
-import type { TimerDurations, TimerMode, TimerModeOption } from "../types";
+import type {
+  AutoStartMode,
+  TimerDurations,
+  TimerMode,
+  TimerModeOption
+} from "../types";
 
 export const DEFAULT_TIMER_DURATIONS: TimerDurations = {
   work: 25 * 60,
@@ -63,4 +68,15 @@ export function getNextTimerMode(
   return completedWorkSessions > 0 && completedWorkSessions % 4 === 0
     ? "longBreak"
     : "shortBreak";
+}
+
+export function shouldAutoStartNextMode(
+  autoStartMode: AutoStartMode,
+  nextMode: TimerMode
+): boolean {
+  if (autoStartMode === "all") {
+    return true;
+  }
+
+  return autoStartMode === "breaks" && nextMode !== "work";
 }

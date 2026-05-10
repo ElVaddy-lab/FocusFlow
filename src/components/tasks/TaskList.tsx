@@ -11,6 +11,7 @@ export function TaskList() {
   const addTask = useTaskStore((state) => state.addTask);
   const updateTask = useTaskStore((state) => state.updateTask);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const toggleTaskToday = useTaskStore((state) => state.toggleTaskToday);
   const toggleTaskStatus = useTaskStore((state) => state.toggleTaskStatus);
   const clearCompletedTasks = useTaskStore(
     (state) => state.clearCompletedTasks
@@ -72,6 +73,7 @@ export function TaskList() {
             <TaskItem
               key={task.id}
               onDelete={deleteTask}
+              onToggleToday={toggleTaskToday}
               onToggleStatus={toggleTaskStatus}
               onUpdate={updateTask}
               task={task}

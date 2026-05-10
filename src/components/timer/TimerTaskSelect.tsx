@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 
 import { useTranslation } from "../../hooks/useTranslation";
 import type { Task } from "../../types";
+import { sortTasksForFocusSelect } from "../../utils/taskUtils";
 
 interface TimerTaskSelectProps {
   activeTaskId: string | null;
@@ -18,7 +19,7 @@ export function TimerTaskSelect({
 }: TimerTaskSelectProps) {
   const { t } = useTranslation();
   const availableTasks = useMemo(
-    () => tasks.filter((task) => task.status !== "completed"),
+    () => sortTasksForFocusSelect(tasks),
     [tasks]
   );
 
@@ -49,7 +50,13 @@ export function TimerTaskSelect({
         </option>
         {availableTasks.map((task) => (
           <option key={task.id} value={task.id}>
-            {task.title}
+            {[
+              task.isToday ? t.task.todayShort : null,
+              t.task.priority[task.priority],
+              task.title
+            ]
+              .filter(Boolean)
+              .join(" - ")}
           </option>
         ))}
       </select>

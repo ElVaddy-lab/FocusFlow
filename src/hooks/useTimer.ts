@@ -5,6 +5,7 @@ import { formatSeconds, getTimerProgress } from "../utils/timerUtils";
 
 export function useTimer() {
   const activeTaskId = useTimerStore((state) => state.activeTaskId);
+  const autoStartMode = useTimerStore((state) => state.autoStartMode);
   const completedWorkSessions = useTimerStore(
     (state) => state.completedWorkSessions
   );
@@ -18,6 +19,7 @@ export function useTimer() {
   const pauseTimer = useTimerStore((state) => state.pauseTimer);
   const resetTimer = useTimerStore((state) => state.resetTimer);
   const setActiveTaskId = useTimerStore((state) => state.setActiveTaskId);
+  const setAutoStartMode = useTimerStore((state) => state.setAutoStartMode);
   const setDurationMinutes = useTimerStore(
     (state) => state.setDurationMinutes
   );
@@ -39,6 +41,7 @@ export function useTimer() {
 
   return {
     activeTaskId,
+    autoStartMode,
     completedWorkSessions,
     durationSeconds,
     durations,
@@ -50,6 +53,7 @@ export function useTimer() {
     remainingSeconds,
     resetTimer,
     setActiveTaskId,
+    setAutoStartMode,
     setDurationMinutes,
     setMode,
     startTimer,

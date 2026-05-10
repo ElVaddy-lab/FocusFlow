@@ -1,8 +1,9 @@
-import { Lock, Pause, Play, RotateCcw } from "lucide-react";
+import { Lock, Maximize2, Pause, Play, RotateCcw } from "lucide-react";
 
 import type { useTimer } from "../../hooks/useTimer";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { Task } from "../../types";
+import { TimerAutoStartSettings } from "./TimerAutoStartSettings";
 import { TimerDurationSettings } from "./TimerDurationSettings";
 import { TimerModeTabs } from "./TimerModeTabs";
 import { TimerProgressRing } from "./TimerProgressRing";
@@ -108,6 +109,14 @@ export function TimerPanel({
             <RotateCcw aria-hidden="true" size={18} />
             {t.common.reset}
           </button>
+          <button
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-300 px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            onClick={() => void window.focusFlow?.openMiniTimer()}
+            type="button"
+          >
+            <Maximize2 aria-hidden="true" size={18} />
+            {t.timer.mini}
+          </button>
         </div>
       </div>
 
@@ -123,6 +132,12 @@ export function TimerPanel({
           activeMode={timer.mode}
           disabled={isRunning || isStrictSessionActive}
           onSelectMode={timer.setMode}
+        />
+
+        <TimerAutoStartSettings
+          disabled={isStrictSessionActive}
+          mode={timer.autoStartMode}
+          onChangeMode={timer.setAutoStartMode}
         />
 
         <TimerDurationSettings

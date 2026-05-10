@@ -1,16 +1,21 @@
 import { FormEvent, useState } from "react";
 
 import { useTranslation } from "../../hooks/useTranslation";
-import type { TaskInput } from "../../types";
+import type { TaskInput, TaskPriority } from "../../types";
 import {
   MAX_ESTIMATED_POMODOROS,
+  MAX_TASK_NOTES_LENGTH,
   MIN_ESTIMATED_POMODOROS,
   normalizeEstimatedPomodoros,
+  normalizeTaskNotes,
+  normalizeTaskPriority,
   normalizeTaskTitle
 } from "../../utils/taskValidation";
 
 interface TaskFormProps {
   initialEstimatedPomodoros?: number;
+  initialNotes?: string;
+  initialPriority?: TaskPriority;
   initialTitle?: string;
   onCancel?: () => void;
   onSubmit: (input: TaskInput) => void;
@@ -19,6 +24,8 @@ interface TaskFormProps {
 
 export function TaskForm({
   initialEstimatedPomodoros = 1,
+  initialNotes = "",
+  initialPriority = "medium",
   initialTitle = "",
   onCancel,
   onSubmit,
@@ -29,6 +36,8 @@ export function TaskForm({
   const [estimatedPomodoros, setEstimatedPomodoros] = useState(
     String(initialEstimatedPomodoros)
   );
+  const [notes, setNotes] = useState(initialNotes);
+  const [priority, setPriority] = useState<TaskPriority>(initialPriority);
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -47,12 +56,16 @@ export function TaskForm({
     setError(null);
     onSubmit({
       title: normalizedTitle,
-      estimatedPomodoros: normalizedEstimate
+      estimatedPomodoros: normalizedEstimate,
+      notes: normalizeTaskNotes(notes),
+      priority: normalizeTaskPriority(priority)
     });
 
     if (!initialTitle) {
       setTitle("");
       setEstimatedPomodoros(String(MIN_ESTIMATED_POMODOROS));
+      setNotes("");
+      setPriority("medium");
     }
   }
 
@@ -61,7 +74,7 @@ export function TaskForm({
       className="grid gap-3 rounded-md border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       onSubmit={handleSubmit}
     >
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_160px]">
         <label className="grid gap-2">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
             {t.task.fieldTitle}
@@ -90,7 +103,37 @@ export function TaskForm({
             value={estimatedPomodoros}
           />
         </label>
+
+        <label className="grid gap-2">
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            {t.task.fieldPriority}
+          </span>
+          <select
+            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:focus:border-teal-400 dark:focus:ring-teal-950"
+            onChange={(event) =>
+              setPriority(normalizeTaskPriority(event.target.value))
+            }
+            value={priority}
+          >
+            <option value="high">{t.task.priority.high}</option>
+            <option value="medium">{t.task.priority.medium}</option>
+            <option value="low">{t.task.priority.low}</option>
+          </select>
+        </label>
       </div>
+
+      <label className="grid gap-2">
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          {t.task.fieldNotes}
+        </span>
+        <textarea
+          className="min-h-24 resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:focus:border-teal-400 dark:focus:ring-teal-950"
+          maxLength={MAX_TASK_NOTES_LENGTH}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder={t.task.notesPlaceholder}
+          value={notes}
+        />
+      </label>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p
