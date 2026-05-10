@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { BlockedSite } from "../types";
 import { createBlockedSite } from "../utils/blockerUtils";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 
 interface StrictModeState {
   blockedSites: BlockedSite[];
@@ -55,7 +56,10 @@ export const useStrictModeStore = create<StrictModeState>()(
     }),
     {
       name: "focusflow-strict-mode",
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-strict-mode", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

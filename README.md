@@ -111,13 +111,13 @@ build/
 
 ## Local Persistence
 
-The app stores user data through Zustand persist middleware. In the installed Electron app, data is written to a durable JSON file in Electron `userData`:
+The app stores user data through Zustand persist middleware. In the installed Electron app, data is written to a durable schema-versioned JSON file in Electron `userData`:
 
 ```text
 %APPDATA%/FocusFlow/focusflow-state.json
 ```
 
-In development/browser fallback, the same stores can still use `localStorage`. On first installed launch, existing renderer `localStorage` values are migrated into the Electron-backed store when possible.
+In development/browser fallback, the same stores can still use `localStorage`. On first installed launch, existing renderer `localStorage` values are migrated into the Electron-backed store when possible. Older flat state files are migrated into the current envelope format, and recovery backups are written as `focusflow-state.backup-*.json` before destructive recovery.
 
 - `focusflow-theme`
 - `focusflow-language`
@@ -126,6 +126,12 @@ In development/browser fallback, the same stores can still use `localStorage`. O
 - `focusflow-goal`
 - `focusflow-strict-mode`
 - `focusflow-stats`
+
+Electron diagnostics are written to:
+
+```text
+%APPDATA%/FocusFlow/logs/focusflow-YYYY-MM-DD.log
+```
 
 ## Strict Mode Notes
 
@@ -144,6 +150,8 @@ npm.cmd run dev             Start Vite and Electron in development
 npm.cmd run build           Type-check and build the app
 npm.cmd run build:electron  Build Electron main/preload only
 npm.cmd run preview         Preview the Vite renderer
+npm.cmd run test            Run Vitest in watch mode
+npm.cmd run test:run        Run Vitest once
 npm.cmd run dist:win        Build a Windows portable exe
 npm.cmd run dist:installer  Build a Windows installer exe
 ```

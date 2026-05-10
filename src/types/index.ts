@@ -111,3 +111,54 @@ export interface StreakStats {
   bestStreak: number;
   currentStreak: number;
 }
+
+export type PersistedStoreKey =
+  | "focusflow-goal"
+  | "focusflow-language"
+  | "focusflow-stats"
+  | "focusflow-strict-mode"
+  | "focusflow-tasks"
+  | "focusflow-theme"
+  | "focusflow-timer";
+
+export interface FocusFlowStateFile {
+  schemaVersion: 1;
+  stores: Partial<Record<PersistedStoreKey, string>>;
+  updatedAt: string;
+}
+
+export interface RendererErrorReport {
+  context?: string;
+  message: string;
+  stack?: string;
+}
+
+export interface PersistedThemeState {
+  mode: ThemeMode;
+}
+
+export interface PersistedLanguageState {
+  language: AppLanguage;
+}
+
+export interface PersistedTaskState {
+  tasks: Task[];
+}
+
+export interface PersistedTimerState {
+  activeTaskId: string | null;
+  autoStartMode: AutoStartMode;
+  durations: TimerDurations;
+}
+
+export interface PersistedGoalState extends DailyFocusGoal {}
+
+export interface PersistedStrictModeState {
+  blockedSites: BlockedSite[];
+  enabled: boolean;
+  lockedResetAttempts: number;
+}
+
+export interface PersistedStatsState {
+  sessions: PomodoroSession[];
+}

@@ -15,6 +15,12 @@ interface TimerSnapshot {
 
 type TimerCommand = "pause" | "reset" | "showMain" | "start";
 
+interface RendererErrorReport {
+  context?: string;
+  message: string;
+  stack?: string;
+}
+
 const focusFlowApi = {
   getPersistedValue: (key: string) =>
     ipcRenderer.invoke("focusflow:storage-get", key) as Promise<string | null>,
@@ -43,6 +49,8 @@ const focusFlowApi = {
   platform: process.platform,
   publishTimerSnapshot: (snapshot: TimerSnapshot) =>
     ipcRenderer.send("focusflow:timer-snapshot", snapshot),
+  reportError: (payload: RendererErrorReport) =>
+    ipcRenderer.invoke("focusflow:renderer-error", payload),
   removePersistedValue: (key: string) =>
     ipcRenderer.invoke("focusflow:storage-remove", key),
   sendTimerCommand: (command: TimerCommand) =>

@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { Task, TaskInput, TaskPriority, TaskStatus } from "../types";
 import { createTaskId } from "../utils/createTaskId";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 import {
   getFirstTodayOrder,
   getNextTodayOrder,
@@ -196,7 +197,10 @@ export const useTaskStore = create<TaskState>()(
       },
       name: "focusflow-tasks",
       partialize: (state) => ({ tasks: state.tasks }),
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-tasks", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

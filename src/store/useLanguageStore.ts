@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { AppLanguage } from "../types";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 
 interface LanguageState {
   language: AppLanguage;
@@ -17,7 +18,10 @@ export const useLanguageStore = create<LanguageState>()(
     }),
     {
       name: "focusflow-language",
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-language", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

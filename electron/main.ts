@@ -11,11 +11,21 @@ import {
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { configureLogger, logError, logInfo, logWarn } from "./logger";
+import {
+  createPersistedStateFile,
+  isPersistedStoreKey,
+  parsePersistedStateFile,
+  type FocusFlowStateFile
+} from "./persistedState";
+
 app.setName("FocusFlow");
 
 if (process.platform === "win32" && process.env.APPDATA) {
   app.setPath("userData", path.join(process.env.APPDATA, "FocusFlow"));
 }
+
+configureLogger(app.getPath("userData"));
 
 const devServerUrl = process.env.VITE_DEV_SERVER_URL;
 const appIconPath = path.join(__dirname, "../build/icon.ico");
@@ -39,7 +49,12 @@ interface TimerSnapshot {
 }
 
 type TimerCommand = "pause" | "reset" | "showMain" | "start";
-type PersistedState = Record<string, string>;
+
+interface RendererErrorReport {
+  context?: string;
+  message: string;
+  stack?: string;
+}
 
 let lastTimerSnapshot: TimerSnapshot = {
   activeTaskTitle: null,
@@ -68,15 +83,19 @@ function isNotificationPayload(
 
 function registerNotificationHandler(): void {
   ipcMain.handle("focusflow:notify", (_event, payload: unknown) => {
-    if (!isNotificationPayload(payload) || !Notification.isSupported()) {
-      return;
-    }
+    try {
+      if (!isNotificationPayload(payload) || !Notification.isSupported()) {
+        return;
+      }
 
-    new Notification({
-      body: payload.body,
-      icon: appIconPath,
-      title: payload.title
-    }).show();
+      new Notification({
+        body: payload.body,
+        icon: appIconPath,
+        title: payload.title
+      }).show();
+    } catch (error) {
+      logError("Failed to show notification.", error);
+    }
   });
 }
 
@@ -84,80 +103,132 @@ function getPersistedStatePath(): string {
   return path.join(app.getPath("userData"), persistedStateFileName);
 }
 
-async function readPersistedState(): Promise<PersistedState> {
+async function backupPersistedState(content: string, reason: string): Promise<void> {
+  try {
+    const filePath = getPersistedStatePath();
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\..+$/, "")
+      .replace("T", "-");
+    const backupPath = path.join(
+      path.dirname(filePath),
+      `focusflow-state.backup-${timestamp}.json`
+    );
+
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(backupPath, content, "utf8");
+    logInfo("Created FocusFlow state backup.", { backupPath, reason });
+  } catch (error) {
+    logError("Failed to create FocusFlow state backup.", error);
+  }
+}
+
+async function readPersistedState(): Promise<FocusFlowStateFile> {
   try {
     const content = await fs.readFile(getPersistedStatePath(), "utf8");
-    const parsed = JSON.parse(content) as unknown;
+    const parsed = parsePersistedStateFile(content);
 
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
+    if (parsed.shouldBackup) {
+      await backupPersistedState(content, parsed.reason);
     }
 
-    return Object.entries(parsed).reduce<PersistedState>(
-      (state, [key, value]) => {
-        if (typeof value === "string") {
-          state[key] = value;
-        }
+    if (parsed.shouldRewrite) {
+      await writePersistedState(parsed.state);
+      logInfo("Rewrote FocusFlow state file.", { reason: parsed.reason });
+    }
 
-        return state;
-      },
-      {}
-    );
+    return parsed.state;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
 
     if (nodeError.code === "ENOENT") {
-      return {};
+      return createPersistedStateFile({});
     }
 
-    console.error("Failed to read FocusFlow state.", error);
-    return {};
+    logError("Failed to read FocusFlow state.", error);
+    return createPersistedStateFile({});
   }
 }
 
-async function writePersistedState(state: PersistedState): Promise<void> {
+async function writePersistedState(state: FocusFlowStateFile): Promise<void> {
   const filePath = getPersistedStatePath();
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(state, null, 2), "utf8");
 }
 
-function isStorageKey(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
+function isRendererErrorReport(value: unknown): value is RendererErrorReport {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<RendererErrorReport>;
+
+  return typeof candidate.message === "string" && candidate.message.length > 0;
 }
 
 function registerPersistentStorageHandlers(): void {
   ipcMain.handle("focusflow:storage-get", async (_event, key: unknown) => {
-    if (!isStorageKey(key)) {
+    try {
+      if (!isPersistedStoreKey(key)) {
+        logWarn("Rejected storage get for unknown key.", { key });
+        return null;
+      }
+
+      const state = await readPersistedState();
+
+      return state.stores[key] ?? null;
+    } catch (error) {
+      logError("Storage get failed.", error);
       return null;
     }
-
-    const state = await readPersistedState();
-
-    return state[key] ?? null;
   });
 
   ipcMain.handle(
     "focusflow:storage-set",
     async (_event, key: unknown, value: unknown) => {
-      if (!isStorageKey(key) || typeof value !== "string") {
-        return;
-      }
+      try {
+        if (!isPersistedStoreKey(key) || typeof value !== "string") {
+          logWarn("Rejected storage set for invalid payload.", { key });
+          return;
+        }
 
-      const state = await readPersistedState();
-      state[key] = value;
-      await writePersistedState(state);
+        const state = await readPersistedState();
+        await writePersistedState(
+          createPersistedStateFile({
+            ...state.stores,
+            [key]: value
+          })
+        );
+      } catch (error) {
+        logError("Storage set failed.", error);
+      }
     }
   );
 
   ipcMain.handle("focusflow:storage-remove", async (_event, key: unknown) => {
-    if (!isStorageKey(key)) {
+    try {
+      if (!isPersistedStoreKey(key)) {
+        logWarn("Rejected storage remove for unknown key.", { key });
+        return;
+      }
+
+      const state = await readPersistedState();
+      const nextStores = { ...state.stores };
+      delete nextStores[key];
+      await writePersistedState(createPersistedStateFile(nextStores));
+    } catch (error) {
+      logError("Storage remove failed.", error);
+    }
+  });
+
+  ipcMain.handle("focusflow:renderer-error", (_event, payload: unknown) => {
+    if (!isRendererErrorReport(payload)) {
       return;
     }
 
-    const state = await readPersistedState();
-    delete state[key];
-    await writePersistedState(state);
+    logError("Renderer reported an error.", payload);
   });
 }
 
@@ -190,18 +261,26 @@ function isTimerCommand(payload: unknown): payload is TimerCommand {
 function loadWindow(window: BrowserWindow, view?: "mini"): void {
   if (devServerUrl) {
     const url = view === "mini" ? `${devServerUrl}?view=mini` : devServerUrl;
-    void window.loadURL(url);
-    return;
-  }
-
-  if (view === "mini") {
-    void window.loadFile(path.join(__dirname, "../dist/index.html"), {
-      query: { view }
+    void window.loadURL(url).catch((error) => {
+      logError("Failed to load development window.", { error, view });
     });
     return;
   }
 
-  void window.loadFile(path.join(__dirname, "../dist/index.html"));
+  if (view === "mini") {
+    void window
+      .loadFile(path.join(__dirname, "../dist/index.html"), {
+        query: { view }
+      })
+      .catch((error) => {
+        logError("Failed to load mini window.", error);
+      });
+    return;
+  }
+
+  void window.loadFile(path.join(__dirname, "../dist/index.html")).catch((error) => {
+    logError("Failed to load main window.", error);
+  });
 }
 
 function showMainWindow(): void {
@@ -219,12 +298,16 @@ function showMainWindow(): void {
 }
 
 function sendTimerCommand(command: TimerCommand): void {
-  if (command === "showMain") {
-    showMainWindow();
-    return;
-  }
+  try {
+    if (command === "showMain") {
+      showMainWindow();
+      return;
+    }
 
-  mainWindow?.webContents.send("focusflow:timer-command", command);
+    mainWindow?.webContents.send("focusflow:timer-command", command);
+  } catch (error) {
+    logError("Failed to send timer command.", { command, error });
+  }
 }
 
 function updateTrayMenu(): void {
@@ -232,37 +315,41 @@ function updateTrayMenu(): void {
     return;
   }
 
-  const isRunning = lastTimerSnapshot.status === "running";
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Open FocusFlow",
-      click: showMainWindow
-    },
-    {
-      label: "Mini Timer",
-      click: createMiniWindow
-    },
-    { type: "separator" },
-    {
-      label: isRunning ? "Pause" : "Start",
-      click: () => sendTimerCommand(isRunning ? "pause" : "start")
-    },
-    {
-      label: "Reset",
-      click: () => sendTimerCommand("reset")
-    },
-    { type: "separator" },
-    {
-      label: "Quit FocusFlow",
-      click: () => {
-        isQuitting = true;
-        app.quit();
+  try {
+    const isRunning = lastTimerSnapshot.status === "running";
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: "Open FocusFlow",
+        click: showMainWindow
+      },
+      {
+        label: "Mini Timer",
+        click: createMiniWindow
+      },
+      { type: "separator" },
+      {
+        label: isRunning ? "Pause" : "Start",
+        click: () => sendTimerCommand(isRunning ? "pause" : "start")
+      },
+      {
+        label: "Reset",
+        click: () => sendTimerCommand("reset")
+      },
+      { type: "separator" },
+      {
+        label: "Quit FocusFlow",
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
       }
-    }
-  ]);
+    ]);
 
-  tray.setContextMenu(contextMenu);
-  tray.setToolTip(`FocusFlow - ${lastTimerSnapshot.formattedTime}`);
+    tray.setContextMenu(contextMenu);
+    tray.setToolTip(`FocusFlow - ${lastTimerSnapshot.formattedTime}`);
+  } catch (error) {
+    logError("Failed to update tray menu.", error);
+  }
 }
 
 function createTray(): void {
@@ -276,9 +363,13 @@ function createTray(): void {
     width: 16
   });
 
-  tray = new Tray(trayIcon);
-  tray.on("double-click", showMainWindow);
-  updateTrayMenu();
+  try {
+    tray = new Tray(trayIcon);
+    tray.on("double-click", showMainWindow);
+    updateTrayMenu();
+  } catch (error) {
+    logError("Failed to create tray.", error);
+  }
 }
 
 function createMiniWindow(): void {
@@ -319,27 +410,43 @@ function createMiniWindow(): void {
 
 function registerTimerBridge(): void {
   ipcMain.handle("focusflow:open-mini-timer", () => {
-    createMiniWindow();
+    try {
+      createMiniWindow();
+    } catch (error) {
+      logError("Failed to open mini timer.", error);
+    }
   });
 
   ipcMain.handle("focusflow:show-main-window", () => {
-    showMainWindow();
+    try {
+      showMainWindow();
+    } catch (error) {
+      logError("Failed to show main window.", error);
+    }
   });
 
   ipcMain.handle("focusflow:timer-command", (_event, command: unknown) => {
-    if (isTimerCommand(command)) {
-      sendTimerCommand(command);
+    try {
+      if (isTimerCommand(command)) {
+        sendTimerCommand(command);
+      }
+    } catch (error) {
+      logError("Timer command IPC failed.", error);
     }
   });
 
   ipcMain.on("focusflow:timer-snapshot", (_event, payload: unknown) => {
-    if (!isTimerSnapshot(payload)) {
-      return;
-    }
+    try {
+      if (!isTimerSnapshot(payload)) {
+        return;
+      }
 
-    lastTimerSnapshot = payload;
-    miniWindow?.webContents.send("focusflow:timer-snapshot", payload);
-    updateTrayMenu();
+      lastTimerSnapshot = payload;
+      miniWindow?.webContents.send("focusflow:timer-snapshot", payload);
+      updateTrayMenu();
+    } catch (error) {
+      logError("Timer snapshot IPC failed.", error);
+    }
   });
 }
 

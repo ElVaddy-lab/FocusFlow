@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { ThemeMode } from "../types";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 
 interface ThemeState {
   mode: ThemeMode;
@@ -20,7 +21,10 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: "focusflow-theme",
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-theme", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

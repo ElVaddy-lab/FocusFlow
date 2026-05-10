@@ -16,6 +16,7 @@ import {
   shouldAutoStartNextMode
 } from "../utils/timerUtils";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 
 interface TimerState {
   activeTaskId: string | null;
@@ -157,7 +158,10 @@ export const useTimerStore = create<TimerState>()(
         autoStartMode: state.autoStartMode,
         durations: state.durations
       }),
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-timer", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

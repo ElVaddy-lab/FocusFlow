@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { DailyFocusGoal, FocusGoalMode } from "../types";
 import { DEFAULT_DAILY_FOCUS_GOAL } from "../utils/goalUtils";
 import { persistentStorage } from "../utils/persistentStorage";
+import { migratePersistedStoreState } from "../utils/persistedStoreMigrations";
 
 interface GoalState extends DailyFocusGoal {
   setGoal: (goal: DailyFocusGoal) => void;
@@ -36,7 +37,10 @@ export const useGoalStore = create<GoalState>()(
         targetMinutes: state.targetMinutes,
         targetPomodoros: state.targetPomodoros
       }),
-      storage: createJSONStorage(() => persistentStorage)
+      migrate: (persistedState) =>
+        migratePersistedStoreState("focusflow-goal", persistedState),
+      storage: createJSONStorage(() => persistentStorage),
+      version: 1
     }
   )
 );

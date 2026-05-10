@@ -13,6 +13,12 @@ interface FocusFlowTimerSnapshot {
   status: string;
 }
 
+interface FocusFlowRendererErrorReport {
+  context?: string;
+  message: string;
+  stack?: string;
+}
+
 interface Window {
   focusFlow?: {
     getPersistedValue: (key: string) => Promise<string | null>;
@@ -26,6 +32,7 @@ interface Window {
     openMiniTimer: () => Promise<void>;
     platform: string;
     publishTimerSnapshot: (snapshot: FocusFlowTimerSnapshot) => void;
+    reportError: (payload: FocusFlowRendererErrorReport) => Promise<void>;
     removePersistedValue: (key: string) => Promise<void>;
     sendTimerCommand: (command: FocusFlowTimerCommand) => Promise<void>;
     setPersistedValue: (key: string, value: string) => Promise<void>;

@@ -4,7 +4,7 @@
 
 FocusFlow is an Electron desktop app for task planning, Pomodoro focus sessions, daily goals, Strict Mode, statistics, tray controls, a Mini Timer, and English/Ukrainian localization.
 
-The user-facing app is implemented in React + TypeScript. State is handled through Zustand stores persisted to LocalStorage. The Windows app is packaged with Electron Builder.
+The user-facing app is implemented in React + TypeScript. State is handled through Zustand stores persisted through a shared storage bridge. The Windows app is packaged with Electron Builder.
 
 ## Commands
 
@@ -14,16 +14,19 @@ Use `npm.cmd` on Windows PowerShell.
 npm.cmd install
 npm.cmd run dev
 npm.cmd run build
+npm.cmd run test:run
 npm.cmd run dist:win
 npm.cmd run dist:installer
 ```
 
-`npm.cmd run build` is the minimum validation before completing code changes.
+`npm.cmd run build` is the minimum validation before completing code changes. Run `npm.cmd run test:run` when touching persistence, migrations, stores, or utilities.
 
 ## Important Paths
 
 ```text
 electron/main.ts
+electron/logger.ts
+electron/persistedState.ts
 electron/preload.ts
 src/App.tsx
 src/components/layout/
@@ -137,10 +140,13 @@ Installed Electron builds persist Zustand state through the preload storage brid
 
 Development/browser fallback may use renderer `localStorage`; do not replace the shared `persistentStorage` utility with default Zustand storage.
 
+The installed state file uses a schema-versioned envelope with per-store string values. Keep validation and migrations in `src/utils/persistedStoreMigrations.ts` aligned with store changes. Recovery backups are written beside the state file as `focusflow-state.backup-*.json`; Electron logs are written under `%APPDATA%/FocusFlow/logs/`.
+
 ## Git Safety
 
 - The workspace may not be initialized as a git repository.
 - Never commit `node_modules/`, `dist/`, `dist-electron/`, or `release/`.
 - Stage explicit paths when the worktree contains mixed or unrelated changes.
 - Run `npm.cmd run build` before committing code changes.
+- Run `npm.cmd run test:run` for persistence/store/utility changes.
 - If asked to push to GitHub, first verify `gh --version`, `gh auth status`, `git status --short --branch`, and `git remote -v`.
