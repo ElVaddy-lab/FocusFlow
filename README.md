@@ -73,7 +73,7 @@ npm.cmd run dist:win
 The portable executable is generated at:
 
 ```text
-release/FocusFlow-0.1.1-portable.exe
+release/FocusFlow-0.1.2-portable.exe
 ```
 
 ## Build Windows Installer
@@ -85,7 +85,7 @@ npm.cmd run dist:installer
 The installer is generated at:
 
 ```text
-release/FocusFlow-Setup-0.1.1.exe
+release/FocusFlow-Setup-0.1.2.exe
 ```
 
 `release/`, `dist/`, `dist-electron/`, and `node_modules/` are generated directories and are ignored by git.

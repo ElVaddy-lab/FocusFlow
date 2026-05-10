@@ -1,6 +1,6 @@
 {
   "name": "focusflow",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Desktop MVP starter for the FocusFlow anti-procrastination app.",
   "main": "dist-electron/main.js",

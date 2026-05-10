@@ -132,13 +132,13 @@ Windows executable resources must be edited before installer creation so install
 The portable executable is generated at:
 
 ```text
-release/FocusFlow-0.1.1-portable.exe
+release/FocusFlow-0.1.2-portable.exe
 ```
 
 The Windows installer is generated at:
 
 ```text
-release/FocusFlow-Setup-0.1.1.exe
+release/FocusFlow-Setup-0.1.2.exe
 ```
 
 ## Persistence
