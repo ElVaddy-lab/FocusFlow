@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import type {
   AutoStartMode,
@@ -15,6 +15,7 @@ import {
   minutesToSeconds,
   shouldAutoStartNextMode
 } from "../utils/timerUtils";
+import { persistentStorage } from "../utils/persistentStorage";
 
 interface TimerState {
   activeTaskId: string | null;
@@ -155,7 +156,8 @@ export const useTimerStore = create<TimerState>()(
         activeTaskId: state.activeTaskId,
         autoStartMode: state.autoStartMode,
         durations: state.durations
-      })
+      }),
+      storage: createJSONStorage(() => persistentStorage)
     }
   )
 );

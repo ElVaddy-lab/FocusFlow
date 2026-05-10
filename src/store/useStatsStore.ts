@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { PomodoroSession } from "../types";
+import { persistentStorage } from "../utils/persistentStorage";
 
 interface StatsState {
   sessions: PomodoroSession[];
@@ -27,7 +28,8 @@ export const useStatsStore = create<StatsState>()(
     }),
     {
       name: "focusflow-stats",
-      partialize: (state) => ({ sessions: state.sessions })
+      partialize: (state) => ({ sessions: state.sessions }),
+      storage: createJSONStorage(() => persistentStorage)
     }
   )
 );

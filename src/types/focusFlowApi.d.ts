@@ -15,6 +15,7 @@ interface FocusFlowTimerSnapshot {
 
 interface Window {
   focusFlow?: {
+    getPersistedValue: (key: string) => Promise<string | null>;
     notify: (payload: FocusFlowNotificationPayload) => Promise<void>;
     onTimerCommand: (
       callback: (command: FocusFlowTimerCommand) => void
@@ -25,7 +26,9 @@ interface Window {
     openMiniTimer: () => Promise<void>;
     platform: string;
     publishTimerSnapshot: (snapshot: FocusFlowTimerSnapshot) => void;
+    removePersistedValue: (key: string) => Promise<void>;
     sendTimerCommand: (command: FocusFlowTimerCommand) => Promise<void>;
+    setPersistedValue: (key: string, value: string) => Promise<void>;
     showMainWindow: () => Promise<void>;
   };
 }

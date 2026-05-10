@@ -16,6 +16,8 @@ interface TimerSnapshot {
 type TimerCommand = "pause" | "reset" | "showMain" | "start";
 
 const focusFlowApi = {
+  getPersistedValue: (key: string) =>
+    ipcRenderer.invoke("focusflow:storage-get", key) as Promise<string | null>,
   notify: (payload: NotificationPayload) =>
     ipcRenderer.invoke("focusflow:notify", payload),
   onTimerCommand: (callback: (command: TimerCommand) => void) => {
@@ -41,8 +43,12 @@ const focusFlowApi = {
   platform: process.platform,
   publishTimerSnapshot: (snapshot: TimerSnapshot) =>
     ipcRenderer.send("focusflow:timer-snapshot", snapshot),
+  removePersistedValue: (key: string) =>
+    ipcRenderer.invoke("focusflow:storage-remove", key),
   sendTimerCommand: (command: TimerCommand) =>
     ipcRenderer.invoke("focusflow:timer-command", command),
+  setPersistedValue: (key: string, value: string) =>
+    ipcRenderer.invoke("focusflow:storage-set", key, value),
   showMainWindow: () => ipcRenderer.invoke("focusflow:show-main-window")
 };
 

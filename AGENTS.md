@@ -113,19 +113,29 @@ build/icon.ico
 
 The Electron Builder configuration lives in `package.json`.
 
-`win.signAndEditExecutable` is currently set to `false` because `winCodeSign` extraction can fail in this Windows environment when symlink privileges are unavailable.
+Windows executable resources must be edited before installer creation so installed shortcuts use the custom icon. Built-in `win.signAndEditExecutable` is intentionally disabled in this local Windows environment because Electron Builder's bundled `app-builder rcedit` extracts a legacy `winCodeSign` archive that requires symlink privileges. Keep `scripts/after-pack.cjs`; it invokes the local `rcedit.exe` vendor binary to embed `build/icon.ico` and version metadata.
 
 The portable executable is generated at:
 
 ```text
-release/FocusFlow-0.1.0-portable.exe
+release/FocusFlow-0.1.1-portable.exe
 ```
 
 The Windows installer is generated at:
 
 ```text
-release/FocusFlow-Setup-0.1.0.exe
+release/FocusFlow-Setup-0.1.1.exe
 ```
+
+## Persistence
+
+Installed Electron builds persist Zustand state through the preload storage bridge into:
+
+```text
+%APPDATA%/FocusFlow/focusflow-state.json
+```
+
+Development/browser fallback may use renderer `localStorage`; do not replace the shared `persistentStorage` utility with default Zustand storage.
 
 ## Git Safety
 

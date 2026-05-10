@@ -8,10 +8,18 @@ import {
   shell,
   Tray
 } from "electron";
+import fs from "node:fs/promises";
 import path from "node:path";
+
+app.setName("FocusFlow");
+
+if (process.platform === "win32" && process.env.APPDATA) {
+  app.setPath("userData", path.join(process.env.APPDATA, "FocusFlow"));
+}
 
 const devServerUrl = process.env.VITE_DEV_SERVER_URL;
 const appIconPath = path.join(__dirname, "../build/icon.ico");
+const persistedStateFileName = "focusflow-state.json";
 let isQuitting = false;
 let mainWindow: BrowserWindow | null = null;
 let miniWindow: BrowserWindow | null = null;
@@ -31,6 +39,7 @@ interface TimerSnapshot {
 }
 
 type TimerCommand = "pause" | "reset" | "showMain" | "start";
+type PersistedState = Record<string, string>;
 
 let lastTimerSnapshot: TimerSnapshot = {
   activeTaskTitle: null,
@@ -68,6 +77,87 @@ function registerNotificationHandler(): void {
       icon: appIconPath,
       title: payload.title
     }).show();
+  });
+}
+
+function getPersistedStatePath(): string {
+  return path.join(app.getPath("userData"), persistedStateFileName);
+}
+
+async function readPersistedState(): Promise<PersistedState> {
+  try {
+    const content = await fs.readFile(getPersistedStatePath(), "utf8");
+    const parsed = JSON.parse(content) as unknown;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.entries(parsed).reduce<PersistedState>(
+      (state, [key, value]) => {
+        if (typeof value === "string") {
+          state[key] = value;
+        }
+
+        return state;
+      },
+      {}
+    );
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+
+    if (nodeError.code === "ENOENT") {
+      return {};
+    }
+
+    console.error("Failed to read FocusFlow state.", error);
+    return {};
+  }
+}
+
+async function writePersistedState(state: PersistedState): Promise<void> {
+  const filePath = getPersistedStatePath();
+
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(state, null, 2), "utf8");
+}
+
+function isStorageKey(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function registerPersistentStorageHandlers(): void {
+  ipcMain.handle("focusflow:storage-get", async (_event, key: unknown) => {
+    if (!isStorageKey(key)) {
+      return null;
+    }
+
+    const state = await readPersistedState();
+
+    return state[key] ?? null;
+  });
+
+  ipcMain.handle(
+    "focusflow:storage-set",
+    async (_event, key: unknown, value: unknown) => {
+      if (!isStorageKey(key) || typeof value !== "string") {
+        return;
+      }
+
+      const state = await readPersistedState();
+      state[key] = value;
+      await writePersistedState(state);
+    }
+  );
+
+  ipcMain.handle("focusflow:storage-remove", async (_event, key: unknown) => {
+    if (!isStorageKey(key)) {
+      return;
+    }
+
+    const state = await readPersistedState();
+    delete state[key];
+    await writePersistedState(state);
   });
 }
 
@@ -301,6 +391,7 @@ if (process.platform === "win32") {
 
 app.whenReady().then(() => {
   registerNotificationHandler();
+  registerPersistentStorageHandlers();
   registerTimerBridge();
   createMainWindow();
   createTray();

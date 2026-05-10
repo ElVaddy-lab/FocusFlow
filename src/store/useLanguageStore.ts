@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { AppLanguage } from "../types";
+import { persistentStorage } from "../utils/persistentStorage";
 
 interface LanguageState {
   language: AppLanguage;
@@ -15,7 +16,8 @@ export const useLanguageStore = create<LanguageState>()(
       setLanguage: (language) => set({ language })
     }),
     {
-      name: "focusflow-language"
+      name: "focusflow-language",
+      storage: createJSONStorage(() => persistentStorage)
     }
   )
 );

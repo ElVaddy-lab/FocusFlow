@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { ThemeMode } from "../types";
+import { persistentStorage } from "../utils/persistentStorage";
 
 interface ThemeState {
   mode: ThemeMode;
@@ -18,7 +19,8 @@ export const useThemeStore = create<ThemeState>()(
         set((state) => ({ mode: state.mode === "light" ? "dark" : "light" }))
     }),
     {
-      name: "focusflow-theme"
+      name: "focusflow-theme",
+      storage: createJSONStorage(() => persistentStorage)
     }
   )
 );

@@ -69,7 +69,7 @@ npm.cmd run dist:win
 The portable executable is generated at:
 
 ```text
-release/FocusFlow-0.1.0-portable.exe
+release/FocusFlow-0.1.1-portable.exe
 ```
 
 ## Build Windows Installer
@@ -81,7 +81,7 @@ npm.cmd run dist:installer
 The installer is generated at:
 
 ```text
-release/FocusFlow-Setup-0.1.0.exe
+release/FocusFlow-Setup-0.1.1.exe
 ```
 
 `release/`, `dist/`, `dist-electron/`, and `node_modules/` are generated directories and are ignored by git.
@@ -111,7 +111,13 @@ build/
 
 ## Local Persistence
 
-The app stores user data in LocalStorage through Zustand persist middleware:
+The app stores user data through Zustand persist middleware. In the installed Electron app, data is written to a durable JSON file in Electron `userData`:
+
+```text
+%APPDATA%/FocusFlow/focusflow-state.json
+```
+
+In development/browser fallback, the same stores can still use `localStorage`. On first installed launch, existing renderer `localStorage` values are migrated into the Electron-backed store when possible.
 
 - `focusflow-theme`
 - `focusflow-language`
@@ -141,3 +147,7 @@ npm.cmd run preview         Preview the Vite renderer
 npm.cmd run dist:win        Build a Windows portable exe
 npm.cmd run dist:installer  Build a Windows installer exe
 ```
+
+## Packaging Notes
+
+Windows executable resources must be edited before installer creation so the installed `FocusFlow.exe`, shortcuts, installer, and uninstaller use `build/icon.ico` instead of the default Electron icon. Built-in `win.signAndEditExecutable` is disabled in this local Windows environment because Electron Builder's bundled `app-builder rcedit` extracts a legacy `winCodeSign` archive that requires symlink privileges. The `scripts/after-pack.cjs` hook uses the local `rcedit.exe` vendor binary to embed the app icon and version metadata instead.
