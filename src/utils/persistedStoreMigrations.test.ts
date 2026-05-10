@@ -10,6 +10,63 @@ describe("persisted store migrations", () => {
     expect(sanitizePersistedStoreValue("focusflow-tasks", "{")).toBeNull();
   });
 
+  it("returns null for malformed storage payloads", () => {
+    expect(
+      sanitizePersistedStoreValue("focusflow-theme", JSON.stringify(null))
+    ).toBeNull();
+  });
+
+  it("normalizes theme and language defaults", () => {
+    expect(migratePersistedStoreState("focusflow-theme", { mode: "system" })).toEqual({
+      mode: "light"
+    });
+    expect(
+      migratePersistedStoreState("focusflow-language", { language: "de" })
+    ).toEqual({
+      language: "en"
+    });
+  });
+
+  it("normalizes goal values into safe ranges", () => {
+    expect(
+      migratePersistedStoreState("focusflow-goal", {
+        mode: "hours",
+        targetMinutes: 9999,
+        targetPomodoros: 0
+      })
+    ).toEqual({
+      mode: "minutes",
+      targetMinutes: 1440,
+      targetPomodoros: 1
+    });
+  });
+
+  it("normalizes audio settings defaults and volume bounds", () => {
+    expect(
+      migratePersistedStoreState("focusflow-audio-settings", {
+        enabled: "yes",
+        volume: 9
+      })
+    ).toEqual({
+      enabled: true,
+      volume: 1
+    });
+  });
+
+  it("normalizes strict mode state and drops invalid blocked sites", () => {
+    expect(
+      migratePersistedStoreState("focusflow-strict-mode", {
+        blockedSites: [{ domain: "www.reddit.com" }, { domain: "localhost" }],
+        enabled: true,
+        lockedResetAttempts: -2
+      })
+    ).toEqual({
+      blockedSites: [{ domain: "reddit.com", id: "reddit.com" }],
+      enabled: true,
+      lockedResetAttempts: 0
+    });
+  });
+
   it("normalizes task payloads without dropping recoverable data", () => {
     const value = sanitizePersistedStoreValue(
       "focusflow-tasks",
