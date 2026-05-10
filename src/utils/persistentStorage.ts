@@ -43,6 +43,10 @@ function isPersistedStoreKey(key: string): key is PersistedStoreKey {
 }
 
 function reportStorageError(context: string, error: unknown): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   const payload: RendererErrorReport = {
     context,
     message: error instanceof Error ? error.message : String(error)

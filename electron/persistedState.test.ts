@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createPersistedStateFile,
+  parseBackupFile,
   parsePersistedStateFile
 } from "./persistedState";
 
@@ -55,5 +56,33 @@ describe("persisted state file parsing", () => {
       stores: {},
       updatedAt: "2026-05-08T12:00:00.000Z"
     });
+  });
+});
+
+describe("backup file parsing", () => {
+  it("loads backup envelopes and drops unknown stores", () => {
+    const backup = parseBackupFile(
+      JSON.stringify({
+        appVersion: "0.1.1",
+        exportedAt: "2026-05-08T12:00:00.000Z",
+        state: {
+          schemaVersion: 1,
+          stores: {
+            "focusflow-theme": "{\"state\":{\"mode\":\"dark\"},\"version\":1}",
+            "focusflow-unknown": "ignored"
+          },
+          updatedAt: "2026-05-08T12:00:00.000Z"
+        }
+      })
+    );
+
+    expect(backup?.appVersion).toBe("0.1.1");
+    expect(backup?.state.stores).toEqual({
+      "focusflow-theme": "{\"state\":{\"mode\":\"dark\"},\"version\":1}"
+    });
+  });
+
+  it("rejects corrupted backup JSON", () => {
+    expect(parseBackupFile("{")).toBeNull();
   });
 });
