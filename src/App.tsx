@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AppLayout } from "./components/layout/AppLayout";
 import { AudioSettingsPanel } from "./components/settings/AudioSettingsPanel";
 import { BackupPanel } from "./components/settings/BackupPanel";
+import { KeyboardShortcutsPanel } from "./components/settings/KeyboardShortcutsPanel";
 import { LanguageSelect } from "./components/settings/LanguageSelect";
 import { StrictModePanel } from "./components/settings/StrictModePanel";
 import { DailyGoalProgress } from "./components/stats/DailyGoalProgress";
@@ -13,6 +14,7 @@ import { TodayQueue } from "./components/tasks/TodayQueue";
 import { MiniTimerWindow } from "./components/timer/MiniTimerWindow";
 import { TimerPanel } from "./components/timer/TimerPanel";
 import { useBlocker } from "./hooks/useBlocker";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { usePomodoroSessionRecorder } from "./hooks/usePomodoroSessionRecorder";
 import { useTimerBridge } from "./hooks/useTimerBridge";
 import { useTimerNotifications } from "./hooks/useTimerNotifications";
@@ -44,6 +46,13 @@ function App() {
   const toggleMode = useThemeStore((state) => state.toggleMode);
   const completedTasks = tasks.filter((task) => task.status === "completed");
   const activeTask = tasks.find((task) => task.id === timer.activeTaskId);
+
+  useKeyboardShortcuts({
+    activeSection,
+    isStrictSessionActive: blocker.isStrictSessionActive,
+    onLockedResetAttempt: blocker.recordLockedResetAttempt,
+    timer
+  });
 
   useTimerBridge({
     activeTaskTitle: activeTask?.title ?? null,
@@ -141,6 +150,7 @@ function App() {
               </div>
             </section>
             <AudioSettingsPanel />
+            <KeyboardShortcutsPanel />
             <BackupPanel />
             <StrictModePanel />
           </div>

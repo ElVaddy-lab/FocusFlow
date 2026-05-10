@@ -54,6 +54,18 @@ export const translations = {
       title: "Audio notifications",
       volume: "Volume"
     },
+    shortcuts: {
+      eyebrow: "Controls",
+      title: "Keyboard shortcuts",
+      items: {
+        escape: "Cancel editing",
+        mini: "Open mini timer",
+        reset: "Reset timer",
+        showMain: "Show main window",
+        startPause: "Start or pause timer",
+        timerSpace: "Start or pause in Timer"
+      }
+    },
     goal: {
       completeMinutes: "Daily focus goal complete.",
       completePomodoros: "Daily Pomodoro goal complete.",
@@ -249,6 +261,18 @@ export const translations = {
       eyebrow: "Звук таймера",
       title: "Аудіосповіщення",
       volume: "Гучність"
+    },
+    shortcuts: {
+      eyebrow: "Керування",
+      title: "Гарячі клавіші",
+      items: {
+        escape: "Скасувати редагування",
+        mini: "Відкрити мінітаймер",
+        reset: "Скинути таймер",
+        showMain: "Показати головне вікно",
+        startPause: "Старт або пауза таймера",
+        timerSpace: "Старт або пауза у Timer"
+      }
     },
     goal: {
       completeMinutes: "Денну ціль фокусу виконано.",

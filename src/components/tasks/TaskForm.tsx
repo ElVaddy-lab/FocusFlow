@@ -72,6 +72,12 @@ export function TaskForm({
   return (
     <form
       className="grid gap-3 rounded-md border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && onCancel) {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
       onSubmit={handleSubmit}
     >
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_160px]">

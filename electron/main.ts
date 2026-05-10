@@ -2,6 +2,7 @@ import {
   app,
   BrowserWindow,
   dialog,
+  globalShortcut,
   ipcMain,
   Menu,
   nativeImage,
@@ -411,6 +412,33 @@ function sendTimerCommand(command: TimerCommand): void {
   }
 }
 
+function registerGlobalShortcuts(): void {
+  const shortcuts: Array<[string, () => void]> = [
+    [
+      "Control+Alt+S",
+      () =>
+        sendTimerCommand(
+          lastTimerSnapshot.status === "running" ? "pause" : "start"
+        )
+    ],
+    ["Control+Alt+R", () => sendTimerCommand("reset")],
+    ["Control+Alt+M", createMiniWindow],
+    ["Control+Alt+T", showMainWindow]
+  ];
+
+  for (const [accelerator, handler] of shortcuts) {
+    try {
+      const registered = globalShortcut.register(accelerator, handler);
+
+      if (!registered) {
+        logWarn("Failed to register global shortcut.", { accelerator });
+      }
+    } catch (error) {
+      logError(`Global shortcut registration failed: ${accelerator}`, error);
+    }
+  }
+}
+
 function updateTrayMenu(): void {
   if (!tray) {
     return;
@@ -604,6 +632,7 @@ app.whenReady().then(() => {
   registerTimerBridge();
   createMainWindow();
   createTray();
+  registerGlobalShortcuts();
 
   app.on("activate", () => {
     if (!mainWindow) {
@@ -617,6 +646,7 @@ app.whenReady().then(() => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  globalShortcut.unregisterAll();
 });
 
 app.on("window-all-closed", () => {
