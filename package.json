@@ -1,0 +1,68 @@
+{
+  "name": "focusflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop MVP starter for the FocusFlow anti-procrastination app.",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:electron:dev\"",
+    "dev:renderer": "vite --host 127.0.0.1",
+    "electron:dev": "wait-on tcp:127.0.0.1:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
+    "build": "tsc -p tsconfig.json --noEmit && npm run build:electron && vite build",
+    "build:electron": "tsc -p tsconfig.node.json",
+    "dist:win": "npm run build && electron-builder --win portable",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "build": {
+    "appId": "com.focusflow.desktop",
+    "productName": "FocusFlow",
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "build/icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "FocusFlow-${version}-portable.exe"
+    }
+  },
+  "dependencies": {
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^1.14.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.0",
+    "concurrently": "^9.0.0",
+    "cross-env": "^10.0.0",
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.12",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0",
+    "vite": "^7.0.0",
+    "wait-on": "^9.0.0"
+  }
+}
