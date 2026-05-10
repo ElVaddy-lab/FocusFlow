@@ -36,6 +36,17 @@ export const translations = {
       tasks: "Tasks",
       timer: "Timer"
     },
+    backup: {
+      description:
+        "Export or restore your local FocusFlow tasks, settings, and statistics as a JSON file.",
+      eyebrow: "Data safety",
+      export: "Export backup",
+      failed: "Backup action failed.",
+      import: "Import backup",
+      storesImported: "stores imported.",
+      title: "Backup and restore",
+      unavailable: "Backup tools are only available in the desktop app."
+    },
     goal: {
       completeMinutes: "Daily focus goal complete.",
       completePomodoros: "Daily Pomodoro goal complete.",
@@ -213,6 +224,17 @@ export const translations = {
       completed: "Виконано",
       tasks: "Завдання",
       timer: "Таймер"
+    },
+    backup: {
+      description:
+        "Експортуй або віднови локальні задачі, налаштування і статистику FocusFlow як JSON-файл.",
+      eyebrow: "Безпека даних",
+      export: "Експорт backup",
+      failed: "Backup-дія не вдалася.",
+      import: "Імпорт backup",
+      storesImported: "stores імпортовано.",
+      title: "Backup і відновлення",
+      unavailable: "Backup доступний тільки у desktop-app."
     },
     goal: {
       completeMinutes: "Денну ціль фокусу виконано.",

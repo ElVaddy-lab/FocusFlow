@@ -19,9 +19,19 @@ interface FocusFlowRendererErrorReport {
   stack?: string;
 }
 
+interface FocusFlowBackupResult {
+  importedStores?: number;
+  message: string;
+  path?: string;
+  success: boolean;
+}
+
 interface Window {
   focusFlow?: {
+    exportBackup: () => Promise<FocusFlowBackupResult>;
+    getBackupMetadata: () => Promise<unknown>;
     getPersistedValue: (key: string) => Promise<string | null>;
+    importBackup: () => Promise<FocusFlowBackupResult>;
     notify: (payload: FocusFlowNotificationPayload) => Promise<void>;
     onTimerCommand: (
       callback: (command: FocusFlowTimerCommand) => void

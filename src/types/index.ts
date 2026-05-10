@@ -119,7 +119,8 @@ export type PersistedStoreKey =
   | "focusflow-strict-mode"
   | "focusflow-tasks"
   | "focusflow-theme"
-  | "focusflow-timer";
+  | "focusflow-timer"
+  | "focusflow-audio-settings";
 
 export interface FocusFlowStateFile {
   schemaVersion: 1;
@@ -131,6 +132,31 @@ export interface RendererErrorReport {
   context?: string;
   message: string;
   stack?: string;
+}
+
+export interface FocusFlowBackupFile {
+  appVersion: string;
+  exportedAt: string;
+  state: FocusFlowStateFile;
+}
+
+export interface BackupResult {
+  importedStores?: number;
+  message: string;
+  path?: string;
+  success: boolean;
+}
+
+export interface AudioSettings {
+  enabled: boolean;
+  volume: number;
+}
+
+export interface TaskFilterState {
+  priority: "all" | TaskPriority;
+  query: string;
+  status: "all" | TaskStatus;
+  today: "all" | "today" | "notToday";
 }
 
 export interface PersistedThemeState {

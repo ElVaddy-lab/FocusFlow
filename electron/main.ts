@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   nativeImage,
@@ -15,7 +16,10 @@ import { configureLogger, logError, logInfo, logWarn } from "./logger";
 import {
   createPersistedStateFile,
   isPersistedStoreKey,
+  parseBackupFile,
   parsePersistedStateFile,
+  type BackupResult,
+  type FocusFlowBackupFile,
   type FocusFlowStateFile
 } from "./persistedState";
 
@@ -229,6 +233,103 @@ function registerPersistentStorageHandlers(): void {
     }
 
     logError("Renderer reported an error.", payload);
+  });
+}
+
+async function exportBackup(): Promise<BackupResult> {
+  try {
+    const state = await readPersistedState();
+    const defaultPath = path.join(
+      app.getPath("documents"),
+      `FocusFlow-backup-${new Date().toISOString().slice(0, 10)}.json`
+    );
+    const result = await dialog.showSaveDialog({
+      defaultPath,
+      filters: [{ extensions: ["json"], name: "FocusFlow backup" }],
+      title: "Export FocusFlow backup"
+    });
+
+    if (result.canceled || !result.filePath) {
+      return { message: "Export canceled.", success: false };
+    }
+
+    const backup: FocusFlowBackupFile = {
+      appVersion: app.getVersion(),
+      exportedAt: new Date().toISOString(),
+      state
+    };
+
+    await fs.writeFile(result.filePath, JSON.stringify(backup, null, 2), "utf8");
+    logInfo("Exported FocusFlow backup.", { path: result.filePath });
+
+    return {
+      message: "Backup exported.",
+      path: result.filePath,
+      success: true
+    };
+  } catch (error) {
+    logError("Failed to export backup.", error);
+    return { message: "Backup export failed.", success: false };
+  }
+}
+
+async function importBackup(): Promise<BackupResult> {
+  try {
+    const result = await dialog.showOpenDialog({
+      filters: [{ extensions: ["json"], name: "FocusFlow backup" }],
+      properties: ["openFile"],
+      title: "Import FocusFlow backup"
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { message: "Import canceled.", success: false };
+    }
+
+    const filePath = result.filePaths[0];
+    const backup = parseBackupFile(await fs.readFile(filePath, "utf8"));
+
+    if (!backup) {
+      return { message: "Invalid backup file.", success: false };
+    }
+
+    const currentState = await readPersistedState();
+    await backupPersistedState(
+      JSON.stringify(currentState, null, 2),
+      "before-import"
+    );
+
+    await writePersistedState(createPersistedStateFile(backup.state.stores));
+    logInfo("Imported FocusFlow backup.", { path: filePath });
+
+    return {
+      importedStores: Object.keys(backup.state.stores).length,
+      message: "Backup imported. Restart FocusFlow to reload restored data.",
+      path: filePath,
+      success: true
+    };
+  } catch (error) {
+    logError("Failed to import backup.", error);
+    return { message: "Backup import failed.", success: false };
+  }
+}
+
+function registerBackupHandlers(): void {
+  ipcMain.handle("focusflow:backup-export", exportBackup);
+  ipcMain.handle("focusflow:backup-import", importBackup);
+  ipcMain.handle("focusflow:backup-metadata", async () => {
+    try {
+      const state = await readPersistedState();
+
+      return {
+        path: getPersistedStatePath(),
+        schemaVersion: state.schemaVersion,
+        stores: Object.keys(state.stores),
+        updatedAt: state.updatedAt
+      };
+    } catch (error) {
+      logError("Failed to read backup metadata.", error);
+      return null;
+    }
   });
 }
 
@@ -499,6 +600,7 @@ if (process.platform === "win32") {
 app.whenReady().then(() => {
   registerNotificationHandler();
   registerPersistentStorageHandlers();
+  registerBackupHandlers();
   registerTimerBridge();
   createMainWindow();
   createTray();

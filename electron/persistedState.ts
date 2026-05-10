@@ -7,7 +7,8 @@ export const persistedStoreKeys = [
   "focusflow-timer",
   "focusflow-goal",
   "focusflow-strict-mode",
-  "focusflow-stats"
+  "focusflow-stats",
+  "focusflow-audio-settings"
 ] as const;
 
 export type PersistedStoreKey = (typeof persistedStoreKeys)[number];
@@ -16,6 +17,19 @@ export interface FocusFlowStateFile {
   schemaVersion: typeof PERSISTED_STATE_SCHEMA_VERSION;
   stores: Partial<Record<PersistedStoreKey, string>>;
   updatedAt: string;
+}
+
+export interface FocusFlowBackupFile {
+  appVersion: string;
+  exportedAt: string;
+  state: FocusFlowStateFile;
+}
+
+export interface BackupResult {
+  importedStores?: number;
+  message: string;
+  path?: string;
+  success: boolean;
 }
 
 export interface ParsedPersistedState {
@@ -95,6 +109,30 @@ export function parsePersistedStateFile(
     };
   } catch {
     return invalidResult("corrupt", now);
+  }
+}
+
+export function parseBackupFile(content: string): FocusFlowBackupFile | null {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+
+    if (!isPlainRecord(parsed) || !isPlainRecord(parsed.state)) {
+      return null;
+    }
+
+    const state = parsePersistedStateFile(JSON.stringify(parsed.state)).state;
+
+    return {
+      appVersion:
+        typeof parsed.appVersion === "string" ? parsed.appVersion : "unknown",
+      exportedAt:
+        typeof parsed.exportedAt === "string"
+          ? parsed.exportedAt
+          : new Date().toISOString(),
+      state
+    };
+  } catch {
+    return null;
   }
 }
 

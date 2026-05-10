@@ -21,9 +21,21 @@ interface RendererErrorReport {
   stack?: string;
 }
 
+interface BackupResult {
+  importedStores?: number;
+  message: string;
+  path?: string;
+  success: boolean;
+}
+
 const focusFlowApi = {
+  exportBackup: () =>
+    ipcRenderer.invoke("focusflow:backup-export") as Promise<BackupResult>,
+  getBackupMetadata: () => ipcRenderer.invoke("focusflow:backup-metadata"),
   getPersistedValue: (key: string) =>
     ipcRenderer.invoke("focusflow:storage-get", key) as Promise<string | null>,
+  importBackup: () =>
+    ipcRenderer.invoke("focusflow:backup-import") as Promise<BackupResult>,
   notify: (payload: NotificationPayload) =>
     ipcRenderer.invoke("focusflow:notify", payload),
   onTimerCommand: (callback: (command: TimerCommand) => void) => {

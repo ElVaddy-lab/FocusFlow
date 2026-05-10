@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 import { AppLayout } from "./components/layout/AppLayout";
+import { BackupPanel } from "./components/settings/BackupPanel";
 import { LanguageSelect } from "./components/settings/LanguageSelect";
 import { StrictModePanel } from "./components/settings/StrictModePanel";
 import { DailyGoalProgress } from "./components/stats/DailyGoalProgress";
@@ -136,6 +137,7 @@ function App() {
                 <LanguageSelect />
               </div>
             </section>
+            <BackupPanel />
             <StrictModePanel />
           </div>
         )}
