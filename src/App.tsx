@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 import { AppLayout } from "./components/layout/AppLayout";
+import { AudioSettingsPanel } from "./components/settings/AudioSettingsPanel";
 import { BackupPanel } from "./components/settings/BackupPanel";
 import { LanguageSelect } from "./components/settings/LanguageSelect";
 import { StrictModePanel } from "./components/settings/StrictModePanel";
@@ -15,6 +16,7 @@ import { useBlocker } from "./hooks/useBlocker";
 import { usePomodoroSessionRecorder } from "./hooks/usePomodoroSessionRecorder";
 import { useTimerBridge } from "./hooks/useTimerBridge";
 import { useTimerNotifications } from "./hooks/useTimerNotifications";
+import { useTimerSounds } from "./hooks/useTimerSounds";
 import { useTranslation } from "./hooks/useTranslation";
 import { useTimer } from "./hooks/useTimer";
 import { useTaskStore } from "./store/useTaskStore";
@@ -30,6 +32,7 @@ function App() {
 
   usePomodoroSessionRecorder();
   useTimerNotifications();
+  useTimerSounds();
 
   const [activeSection, setActiveSection] =
     useState<NavigationSection>("dashboard");
@@ -137,6 +140,7 @@ function App() {
                 <LanguageSelect />
               </div>
             </section>
+            <AudioSettingsPanel />
             <BackupPanel />
             <StrictModePanel />
           </div>

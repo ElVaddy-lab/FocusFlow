@@ -4,6 +4,7 @@ import type { PersistedStoreKey, RendererErrorReport } from "../types";
 import { sanitizePersistedStoreValue } from "./persistedStoreMigrations";
 
 const persistedStoreKeys = new Set<PersistedStoreKey>([
+  "focusflow-audio-settings",
   "focusflow-goal",
   "focusflow-language",
   "focusflow-stats",

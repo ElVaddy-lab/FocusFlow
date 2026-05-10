@@ -47,6 +47,13 @@ export const translations = {
       title: "Backup and restore",
       unavailable: "Backup tools are only available in the desktop app."
     },
+    audio: {
+      description:
+        "Play a short local sound when a work session or break finishes.",
+      eyebrow: "Timer sound",
+      title: "Audio notifications",
+      volume: "Volume"
+    },
     goal: {
       completeMinutes: "Daily focus goal complete.",
       completePomodoros: "Daily Pomodoro goal complete.",
@@ -235,6 +242,13 @@ export const translations = {
       storesImported: "stores імпортовано.",
       title: "Backup і відновлення",
       unavailable: "Backup доступний тільки у desktop-app."
+    },
+    audio: {
+      description:
+        "Відтворює короткий локальний звук після завершення роботи або перерви.",
+      eyebrow: "Звук таймера",
+      title: "Аудіосповіщення",
+      volume: "Гучність"
     },
     goal: {
       completeMinutes: "Денну ціль фокусу виконано.",

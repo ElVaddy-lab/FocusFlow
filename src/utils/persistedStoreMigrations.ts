@@ -1,5 +1,6 @@
 import type {
   AppLanguage,
+  AudioSettings,
   AutoStartMode,
   BlockedSite,
   DailyFocusGoal,
@@ -44,6 +45,8 @@ export function sanitizePersistedStoreState(
   state: unknown
 ): unknown {
   switch (key) {
+    case "focusflow-audio-settings":
+      return sanitizeAudioSettingsState(state);
     case "focusflow-goal":
       return sanitizeGoalState(state);
     case "focusflow-language":
@@ -59,6 +62,15 @@ export function sanitizePersistedStoreState(
     case "focusflow-timer":
       return sanitizeTimerState(state);
   }
+}
+
+function sanitizeAudioSettingsState(state: unknown): AudioSettings {
+  const record = isRecord(state) ? state : {};
+
+  return {
+    enabled: record.enabled !== false,
+    volume: clampNumber(record.volume, 0, 1, 0.6)
+  };
 }
 
 export function sanitizePersistedStoreValue(
@@ -276,6 +288,21 @@ function clampInteger(
   }
 
   return Math.min(max, Math.max(min, Math.round(numberValue)));
+}
+
+function clampNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, numberValue));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
