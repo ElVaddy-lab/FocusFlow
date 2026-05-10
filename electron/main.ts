@@ -15,14 +15,12 @@ import path from "node:path";
 
 import { configureLogger, logError, logInfo, logWarn } from "./logger";
 import {
-  createPersistedStateFile,
   isPersistedStoreKey,
   parseBackupFile,
-  parsePersistedStateFile,
   type BackupResult,
-  type FocusFlowBackupFile,
-  type FocusFlowStateFile
+  type FocusFlowBackupFile
 } from "./persistedState";
+import { PersistedStateStorage } from "./persistedStateStorage";
 
 app.setName("FocusFlow");
 
@@ -34,7 +32,7 @@ configureLogger(app.getPath("userData"));
 
 const devServerUrl = process.env.VITE_DEV_SERVER_URL;
 const appIconPath = path.join(__dirname, "../build/icon.ico");
-const persistedStateFileName = "focusflow-state.json";
+const persistedStateStorage = new PersistedStateStorage(app.getPath("userData"));
 let isQuitting = false;
 let mainWindow: BrowserWindow | null = null;
 let miniWindow: BrowserWindow | null = null;
@@ -104,65 +102,6 @@ function registerNotificationHandler(): void {
   });
 }
 
-function getPersistedStatePath(): string {
-  return path.join(app.getPath("userData"), persistedStateFileName);
-}
-
-async function backupPersistedState(content: string, reason: string): Promise<void> {
-  try {
-    const filePath = getPersistedStatePath();
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\..+$/, "")
-      .replace("T", "-");
-    const backupPath = path.join(
-      path.dirname(filePath),
-      `focusflow-state.backup-${timestamp}.json`
-    );
-
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(backupPath, content, "utf8");
-    logInfo("Created FocusFlow state backup.", { backupPath, reason });
-  } catch (error) {
-    logError("Failed to create FocusFlow state backup.", error);
-  }
-}
-
-async function readPersistedState(): Promise<FocusFlowStateFile> {
-  try {
-    const content = await fs.readFile(getPersistedStatePath(), "utf8");
-    const parsed = parsePersistedStateFile(content);
-
-    if (parsed.shouldBackup) {
-      await backupPersistedState(content, parsed.reason);
-    }
-
-    if (parsed.shouldRewrite) {
-      await writePersistedState(parsed.state);
-      logInfo("Rewrote FocusFlow state file.", { reason: parsed.reason });
-    }
-
-    return parsed.state;
-  } catch (error) {
-    const nodeError = error as NodeJS.ErrnoException;
-
-    if (nodeError.code === "ENOENT") {
-      return createPersistedStateFile({});
-    }
-
-    logError("Failed to read FocusFlow state.", error);
-    return createPersistedStateFile({});
-  }
-}
-
-async function writePersistedState(state: FocusFlowStateFile): Promise<void> {
-  const filePath = getPersistedStatePath();
-
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(state, null, 2), "utf8");
-}
-
 function isRendererErrorReport(value: unknown): value is RendererErrorReport {
   if (!value || typeof value !== "object") {
     return false;
@@ -181,7 +120,7 @@ function registerPersistentStorageHandlers(): void {
         return null;
       }
 
-      const state = await readPersistedState();
+      const state = await persistedStateStorage.readState();
 
       return state.stores[key] ?? null;
     } catch (error) {
@@ -199,13 +138,7 @@ function registerPersistentStorageHandlers(): void {
           return;
         }
 
-        const state = await readPersistedState();
-        await writePersistedState(
-          createPersistedStateFile({
-            ...state.stores,
-            [key]: value
-          })
-        );
+        await persistedStateStorage.setStoreValue(key, value);
       } catch (error) {
         logError("Storage set failed.", error);
       }
@@ -219,10 +152,7 @@ function registerPersistentStorageHandlers(): void {
         return;
       }
 
-      const state = await readPersistedState();
-      const nextStores = { ...state.stores };
-      delete nextStores[key];
-      await writePersistedState(createPersistedStateFile(nextStores));
+      await persistedStateStorage.removeStoreValue(key);
     } catch (error) {
       logError("Storage remove failed.", error);
     }
@@ -239,7 +169,7 @@ function registerPersistentStorageHandlers(): void {
 
 async function exportBackup(): Promise<BackupResult> {
   try {
-    const state = await readPersistedState();
+    const state = await persistedStateStorage.readState();
     const defaultPath = path.join(
       app.getPath("documents"),
       `FocusFlow-backup-${new Date().toISOString().slice(0, 10)}.json`
@@ -293,13 +223,7 @@ async function importBackup(): Promise<BackupResult> {
       return { message: "Invalid backup file.", success: false };
     }
 
-    const currentState = await readPersistedState();
-    await backupPersistedState(
-      JSON.stringify(currentState, null, 2),
-      "before-import"
-    );
-
-    await writePersistedState(createPersistedStateFile(backup.state.stores));
+    await persistedStateStorage.replaceStateFromBackup(backup.state);
     logInfo("Imported FocusFlow backup.", { path: filePath });
 
     return {
@@ -319,10 +243,10 @@ function registerBackupHandlers(): void {
   ipcMain.handle("focusflow:backup-import", importBackup);
   ipcMain.handle("focusflow:backup-metadata", async () => {
     try {
-      const state = await readPersistedState();
+      const state = await persistedStateStorage.readState();
 
       return {
-        path: getPersistedStatePath(),
+        path: persistedStateStorage.getStatePath(),
         schemaVersion: state.schemaVersion,
         stores: Object.keys(state.stores),
         updatedAt: state.updatedAt
