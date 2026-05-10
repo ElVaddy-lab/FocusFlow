@@ -62,6 +62,7 @@ Do not commit generated output.
 - Put persisted state in `src/store/` using Zustand.
 - Keep app text in `src/i18n/translations.ts`; do not hardcode visible UI strings in components unless the text is user data or an external literal.
 - Keep theme and language persisted separately from domain data.
+- Keep backup/import behavior routed through the Electron storage envelope and validators; do not bypass `src/utils/persistedStoreMigrations.ts`.
 - Do not introduce a router until navigation needs URLs or deep links.
 - Do not automatically modify the Windows hosts file. Strict Mode may generate a script, but user execution must remain explicit.
 
@@ -74,6 +75,7 @@ Do not commit generated output.
 - `useTimerStore`: Pomodoro mode, auto-start mode, durations, active task, countdown, completion events.
 - `useStrictModeStore`: Strict Mode toggle, blocked sites, lockout attempts.
 - `useStatsStore`: completed Pomodoro session history.
+- `useAudioSettingsStore`: timer sound toggle and volume.
 
 ## Timer And Stats
 
@@ -83,6 +85,15 @@ Completed work sessions are emitted from `useTimerStore.lastCompletedPomodoro`.
 Avoid recording stats directly from UI button handlers. The timer store should remain the source of truth for completed Pomodoros.
 
 The main renderer is the source of truth for timer ticking. Tray and Mini Timer controls must communicate through the preload IPC bridge and must not create a second independent timer loop.
+
+Audio notifications are renderer-side Web Audio tones driven by `useTimerSounds`; they listen to `lastCompletedTimerEvent` and must dedupe by event id.
+
+Keyboard shortcuts:
+
+- Global Electron shortcuts are registered in `electron/main.ts` and send commands through the existing timer bridge.
+- Local renderer shortcuts live in `src/hooks/useKeyboardShortcuts.ts` and must ignore input, textarea, select, and contenteditable targets.
+
+Task search/filtering is UI-only in `TaskList`/`TaskFilters`; do not add persisted schema for search state unless explicitly requested.
 
 ## Localization
 
@@ -141,6 +152,19 @@ Installed Electron builds persist Zustand state through the preload storage brid
 Development/browser fallback may use renderer `localStorage`; do not replace the shared `persistentStorage` utility with default Zustand storage.
 
 The installed state file uses a schema-versioned envelope with per-store string values. Keep validation and migrations in `src/utils/persistedStoreMigrations.ts` aligned with store changes. Recovery backups are written beside the state file as `focusflow-state.backup-*.json`; Electron logs are written under `%APPDATA%/FocusFlow/logs/`.
+
+Settings Backup/Restore uses Electron dialogs and imports validated store values only. Backup files include the current state envelope plus `appVersion` and `exportedAt`.
+
+## Testing
+
+Vitest test coverage includes:
+
+- Electron persisted state envelope and backup parsing.
+- Store validators/migrations.
+- Timer, task, and stats utilities.
+- Zustand task/timer/stat store transitions.
+
+Run `npm.cmd run test:run` after changing persistence, backup/restore, stores, hooks, timer/task/stat utils, or keyboard/audio behavior.
 
 ## Git Safety
 

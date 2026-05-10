@@ -5,6 +5,7 @@ FocusFlow is a desktop anti-procrastination app built with Electron, React, Type
 ## Features
 
 - Task Manager: create, edit, delete, complete, prioritize, add notes, and persist tasks locally.
+- Task Search and Filters: filter tasks by title/notes, priority, status, and Today membership.
 - Today Queue: plan today's active focus queue and reorder it with up/down controls.
 - Pomodoro Timer: work, short break, and long break modes with configurable durations and auto-start modes.
 - Task-linked focus sessions: select an active task for the timer.
@@ -13,6 +14,9 @@ FocusFlow is a desktop anti-procrastination app built with Electron, React, Type
 - Windows hosts script generation for blocked domains.
 - Statistics: completed Pomodoro history, weekly focus chart, 12-week heatmap, current streak, and best streak.
 - System notifications when timer sessions complete.
+- Audio notifications with a persisted enable toggle and volume control.
+- Keyboard shortcuts for timer control, Mini Timer, main window restore, and edit cancellation.
+- Local JSON backup and restore from Settings.
 - Tray mode with Start/Pause/Reset actions and a Mini Timer window.
 - Appearance: light/dark theme.
 - Languages: English and Ukrainian.
@@ -25,7 +29,7 @@ FocusFlow is a desktop anti-procrastination app built with Electron, React, Type
 - TypeScript
 - Vite
 - Tailwind CSS
-- Zustand with LocalStorage persistence
+- Zustand with Electron-backed persistence and LocalStorage fallback
 - Framer Motion
 - Lucide React
 - Electron Builder
@@ -99,7 +103,7 @@ src/
     stats/                Productivity dashboard
     tasks/                Task manager UI
     timer/                Pomodoro timer UI
-  hooks/                  App hooks for timer, blocker, stats recording, i18n
+  hooks/                  App hooks for timer, blocker, stats recording, i18n, shortcuts, audio
   i18n/                   English/Ukrainian translations
   store/                  Zustand stores
   types/                  Shared TypeScript types
@@ -126,6 +130,9 @@ In development/browser fallback, the same stores can still use `localStorage`. O
 - `focusflow-goal`
 - `focusflow-strict-mode`
 - `focusflow-stats`
+- `focusflow-audio-settings`
+
+The Settings screen can export/import a local JSON backup. Backup files contain the schema-versioned state envelope plus export metadata (`appVersion`, `exportedAt`). Imports are validated through the same store sanitizers and migrations used by normal app startup.
 
 Electron diagnostics are written to:
 
@@ -159,3 +166,22 @@ npm.cmd run dist:installer  Build a Windows installer exe
 ## Packaging Notes
 
 Windows executable resources must be edited before installer creation so the installed `FocusFlow.exe`, shortcuts, installer, and uninstaller use `build/icon.ico` instead of the default Electron icon. Built-in `win.signAndEditExecutable` is disabled in this local Windows environment because Electron Builder's bundled `app-builder rcedit` extracts a legacy `winCodeSign` archive that requires symlink privileges. The `scripts/after-pack.cjs` hook uses the local `rcedit.exe` vendor binary to embed the app icon and version metadata instead.
+
+## Keyboard Shortcuts
+
+```text
+Ctrl+Alt+S  Start/Pause timer
+Ctrl+Alt+R  Reset timer
+Ctrl+Alt+M  Open Mini Timer
+Ctrl+Alt+T  Show main window
+Space       Start/Pause on the Timer page when not typing
+Escape      Cancel task edit forms
+```
+
+## Test Coverage
+
+Vitest covers persistence envelope migration, backup parsing, store sanitizers, timer/task/stat utilities, and critical Zustand store transitions. Run the full suite with:
+
+```powershell
+npm.cmd run test:run
+```
