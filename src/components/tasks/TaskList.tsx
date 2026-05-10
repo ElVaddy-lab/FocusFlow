@@ -1,9 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { useTranslation } from "../../hooks/useTranslation";
 import { useTaskStore } from "../../store/useTaskStore";
+import type { Task, TaskFilterState } from "../../types";
+import { TaskFilters } from "./TaskFilters";
 import { TaskForm } from "./TaskForm";
 import { TaskItem } from "./TaskItem";
+
+const defaultFilters: TaskFilterState = {
+  priority: "all",
+  query: "",
+  status: "all",
+  today: "all"
+};
 
 export function TaskList() {
   const { t } = useTranslation();
@@ -16,12 +25,17 @@ export function TaskList() {
   const clearCompletedTasks = useTaskStore(
     (state) => state.clearCompletedTasks
   );
+  const [filters, setFilters] = useState<TaskFilterState>(defaultFilters);
 
   const completedCount = useMemo(
     () => tasks.filter((task) => task.status === "completed").length,
     [tasks]
   );
   const remainingCount = tasks.length - completedCount;
+  const filteredTasks = useMemo(
+    () => filterTasks(tasks, filters),
+    [filters, tasks]
+  );
 
   return (
     <section className="space-y-4" aria-labelledby="task-manager-title">
@@ -50,6 +64,7 @@ export function TaskList() {
       </div>
 
       <TaskForm onSubmit={addTask} submitLabel={t.task.addTask} />
+      <TaskFilters filters={filters} onChange={setFilters} />
 
       <div className="flex flex-wrap gap-3 text-sm text-zinc-600 dark:text-zinc-300">
         <span>
@@ -67,9 +82,13 @@ export function TaskList() {
         <div className="rounded-md border border-dashed border-zinc-300 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
           {t.task.empty}
         </div>
+      ) : filteredTasks.length === 0 ? (
+        <div className="rounded-md border border-dashed border-zinc-300 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+          {t.task.noMatches}
+        </div>
       ) : (
         <ul className="space-y-3">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <TaskItem
               key={task.id}
               onDelete={deleteTask}
@@ -83,4 +102,25 @@ export function TaskList() {
       )}
     </section>
   );
+}
+
+function filterTasks(tasks: Task[], filters: TaskFilterState): Task[] {
+  const query = filters.query.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    const matchesQuery =
+      query.length === 0 ||
+      task.title.toLowerCase().includes(query) ||
+      task.notes.toLowerCase().includes(query);
+    const matchesPriority =
+      filters.priority === "all" || task.priority === filters.priority;
+    const matchesStatus =
+      filters.status === "all" || task.status === filters.status;
+    const matchesToday =
+      filters.today === "all" ||
+      (filters.today === "today" && task.isToday) ||
+      (filters.today === "notToday" && !task.isToday);
+
+    return matchesQuery && matchesPriority && matchesStatus && matchesToday;
+  });
 }
