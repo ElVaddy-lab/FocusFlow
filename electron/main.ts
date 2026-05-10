@@ -14,6 +14,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { configureLogger, logError, logInfo, logWarn } from "./logger";
+import { IpcRateLimiter } from "./ipcRateLimit";
 import {
   isPersistedStoreKey,
   parseBackupFile,
@@ -33,6 +34,26 @@ configureLogger(app.getPath("userData"));
 const devServerUrl = process.env.VITE_DEV_SERVER_URL;
 const appIconPath = path.join(__dirname, "../build/icon.ico");
 const persistedStateStorage = new PersistedStateStorage(app.getPath("userData"));
+const notificationRateLimiter = new IpcRateLimiter({
+  maxRequests: 5,
+  windowMs: 60_000
+});
+const rendererErrorRateLimiter = new IpcRateLimiter({
+  maxRequests: 10,
+  windowMs: 60_000
+});
+const storageGetRateLimiter = new IpcRateLimiter({
+  maxRequests: 240,
+  windowMs: 60_000
+});
+const storageMutationRateLimiter = new IpcRateLimiter({
+  maxRequests: 120,
+  windowMs: 60_000
+});
+const timerSnapshotRateLimiter = new IpcRateLimiter({
+  maxRequests: 4,
+  windowMs: 1_000
+});
 let isQuitting = false;
 let mainWindow: BrowserWindow | null = null;
 let miniWindow: BrowserWindow | null = null;
@@ -87,6 +108,10 @@ function isNotificationPayload(
 function registerNotificationHandler(): void {
   ipcMain.handle("focusflow:notify", (_event, payload: unknown) => {
     try {
+      if (!notificationRateLimiter.allow("focusflow:notify")) {
+        return;
+      }
+
       if (!isNotificationPayload(payload) || !Notification.isSupported()) {
         return;
       }
@@ -115,6 +140,10 @@ function isRendererErrorReport(value: unknown): value is RendererErrorReport {
 function registerPersistentStorageHandlers(): void {
   ipcMain.handle("focusflow:storage-get", async (_event, key: unknown) => {
     try {
+      if (!storageGetRateLimiter.allow("focusflow:storage-get")) {
+        return null;
+      }
+
       if (!isPersistedStoreKey(key)) {
         logWarn("Rejected storage get for unknown key.", { key });
         return null;
@@ -133,6 +162,10 @@ function registerPersistentStorageHandlers(): void {
     "focusflow:storage-set",
     async (_event, key: unknown, value: unknown) => {
       try {
+        if (!storageMutationRateLimiter.allow("focusflow:storage-set")) {
+          return;
+        }
+
         if (!isPersistedStoreKey(key) || typeof value !== "string") {
           logWarn("Rejected storage set for invalid payload.", { key });
           return;
@@ -147,6 +180,10 @@ function registerPersistentStorageHandlers(): void {
 
   ipcMain.handle("focusflow:storage-remove", async (_event, key: unknown) => {
     try {
+      if (!storageMutationRateLimiter.allow("focusflow:storage-remove")) {
+        return;
+      }
+
       if (!isPersistedStoreKey(key)) {
         logWarn("Rejected storage remove for unknown key.", { key });
         return;
@@ -159,6 +196,10 @@ function registerPersistentStorageHandlers(): void {
   });
 
   ipcMain.handle("focusflow:renderer-error", (_event, payload: unknown) => {
+    if (!rendererErrorRateLimiter.allow("focusflow:renderer-error")) {
+      return;
+    }
+
     if (!isRendererErrorReport(payload)) {
       return;
     }
@@ -490,6 +531,10 @@ function registerTimerBridge(): void {
 
   ipcMain.on("focusflow:timer-snapshot", (_event, payload: unknown) => {
     try {
+      if (!timerSnapshotRateLimiter.allow("focusflow:timer-snapshot")) {
+        return;
+      }
+
       if (!isTimerSnapshot(payload)) {
         return;
       }
